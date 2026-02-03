@@ -1,11 +1,3 @@
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.14.0
-)
-FetchContent_MakeAvailable(googletest)
-
 add_executable(flash_tool_tests
   test_file_reader.cpp
   test_partition_writer.cpp

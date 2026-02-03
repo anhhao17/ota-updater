@@ -1,5 +1,6 @@
 #define _FILE_OFFSET_BITS 64
 
+#include "flash/config_parser.hpp"
 #include "flash/file_reader.hpp"
 #include "flash/flasher.hpp"
 #include "flash/partition_writer.hpp"
@@ -9,19 +10,21 @@
 #include <cstdlib>
 #include <cstring>
 #include <getopt.h>
+#include <string>
 
 namespace {
+
+constexpr const char *kDefaultConfigPath = "/etc/skytrack/skytrack.conf";
 
 void PrintUsage(const char *argv) {
     std::fprintf(stderr,
         "Usage:\n"
-        "  %s -i <input|-> -o </dev/partition> [-s <bytes>] [-f <bytes>] [--progress]\n"
+        "   %s -i <input|-> [-o </dev/partition>] [-f <bytes>] [--progress]\n"
         "\n"
         "Options:\n"
         "  -i, --input            Input file path or '-' for stdin\n"
         "  -o, --output           Output partition path (e.g. /dev/nvme0n1p1)\n"
         "  -f, --fsync-interval   Bytes between fsync() calls (default 1048576). 0 disables fsync\n"
-        "      --progress         Print progress\n"
         "  -h, --help             Show this help\n",
         argv);
 }
@@ -32,24 +35,24 @@ int main(int argc, char **argv) {
     flash::InstallSignalHandlers();
 
     const char *in = nullptr;
-    const char *out = nullptr;
+    const char *out_cli = nullptr;
+    std::string config_path = kDefaultConfigPath;
 
     flash::FlashOptions opt{};
     opt.fsync_interval_bytes = 1024 * 1024ULL;
-    opt.progress = false;
+    opt.progress = true;
 
     static option long_opts[] = {
         {"input", required_argument, nullptr, 'i'},
         {"output", required_argument, nullptr, 'o'},
         {"fsync-interval", required_argument, nullptr, 'f'},
-        {"progress", no_argument, nullptr, 1000},
         {"help", no_argument, nullptr, 'h'},
         {nullptr, 0, nullptr, 0},
     };
 
     int idx = 0;
     int c;
-    while ((c = getopt_long(argc, argv, "hi:o:s:f:", long_opts, &idx)) != -1) {
+    while ((c = getopt_long(argc, argv, "hi:o:f:", long_opts, &idx)) != -1) {
         switch (c) {
             case 'h':
                 PrintUsage(argv[0]);
@@ -60,7 +63,7 @@ int main(int argc, char **argv) {
                 break;
 
             case 'o':
-                out = optarg;
+                out_cli = optarg;
                 break;
 
             case 'f': {
@@ -74,19 +77,39 @@ int main(int argc, char **argv) {
                 break;
             }
 
-            case 1000:
-                opt.progress = true;
-                break;
-
             default:
                 PrintUsage(argv[0]);
                 return 2;
         }
     }
 
-    if (!in || !out) {
+    if (!in) {
         PrintUsage(argv[0]);
         return 2;
+    }
+
+    flash::config::SkytrackConfigFromFile cfg;
+    const bool cfg_ok = cfg.LoadFile(config_path);
+
+    if (!cfg_ok && !out_cli) {
+        std::fprintf(stderr, "ERROR: cannot load config: %s\n", config_path.c_str());
+        return 1;
+    } else if (!cfg_ok && out_cli) {
+        std::fprintf(stderr, "WARN: cannot load config: %s (continuing due to -o)\n", config_path.c_str());
+    } else {
+        if (cfg.fsync_interval_bytes.has_value()) {
+            opt.fsync_interval_bytes = *cfg.fsync_interval_bytes;
+        }
+        if (cfg.progress.has_value()) {
+            opt.progress = *cfg.progress;
+        }
+    }
+
+    std::string out;
+    if (out_cli) {
+        out = out_cli;
+    } else {
+        out = cfg.rootfs_part_b;
     }
 
     flash::FileOrStdinReader reader;

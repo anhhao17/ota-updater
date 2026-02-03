@@ -23,4 +23,5 @@ public:
     virtual Result FsyncNow() = 0;
 };
 
+
 } // namespace flash
