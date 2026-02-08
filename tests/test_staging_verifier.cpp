@@ -1,5 +1,3 @@
-#include <gtest/gtest.h>
-
 #include "crypto/sha256.hpp"
 #include "ota/staging_verifier.hpp"
 #include "testing.hpp"
@@ -7,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdint>
+#include <gtest/gtest.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -19,8 +18,10 @@ std::string ReadAll(IReader& reader) {
     std::vector<std::uint8_t> buf(1024);
     while (true) {
         const ssize_t n = reader.Read(std::span<std::uint8_t>(buf.data(), buf.size()));
-        if (n == 0) break;
-        if (n < 0) return {};
+        if (n == 0)
+            break;
+        if (n < 0)
+            return {};
         out.append(reinterpret_cast<const char*>(buf.data()), static_cast<size_t>(n));
     }
     return out;
@@ -28,10 +29,8 @@ std::string ReadAll(IReader& reader) {
 
 TEST(StagingVerifierTest, StageAndVerifyAcceptsCorrectHash) {
     const std::string payload = "kernel-image-content";
-    const std::string expected = Sha256Hex(
-        std::span<const std::uint8_t>(
-            reinterpret_cast<const std::uint8_t*>(payload.data()),
-            payload.size()));
+    const std::string expected = Sha256Hex(std::span<const std::uint8_t>(
+        reinterpret_cast<const std::uint8_t*>(payload.data()), payload.size()));
 
     OtaEntryStager stager;
     StagedEntry staged;
@@ -58,10 +57,8 @@ TEST(StagingVerifierTest, StageAndVerifyRejectsTamperedContent) {
 
 TEST(StagingVerifierTest, StageAndVerifyAcceptsUppercaseExpectedHash) {
     const std::string payload = "filesystem-archive";
-    std::string expected = Sha256Hex(
-        std::span<const std::uint8_t>(
-            reinterpret_cast<const std::uint8_t*>(payload.data()),
-            payload.size()));
+    std::string expected = Sha256Hex(std::span<const std::uint8_t>(
+        reinterpret_cast<const std::uint8_t*>(payload.data()), payload.size()));
     std::transform(expected.begin(), expected.end(), expected.begin(), [](unsigned char c) {
         return static_cast<char>(std::toupper(c));
     });

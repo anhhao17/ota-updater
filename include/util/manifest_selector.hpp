@@ -7,10 +7,8 @@
 namespace flash {
 
 class ManifestSelector {
-public:
-    static Result SelectForDevice(const Manifest& input,
-                                  const DeviceConfig& device,
-                                  Manifest& out);
+  public:
+    static Result SelectForDevice(const Manifest& input, const DeviceConfig& device, Manifest& out);
 };
 
 } // namespace flash

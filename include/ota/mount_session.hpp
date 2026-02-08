@@ -9,9 +9,9 @@
 namespace flash {
 
 class MountSession {
-public:
+  public:
     class ISystemOps {
-    public:
+      public:
         virtual ~ISystemOps() = default;
         virtual Result CreateMountPoint(std::string_view mount_base_dir,
                                         std::string_view mount_prefix,
@@ -42,7 +42,7 @@ public:
     Result Unmount();
     const std::string& Dir() const { return dir_; }
 
-private:
+  private:
     void Cleanup();
 
     static std::shared_ptr<const ISystemOps> DefaultSystemOps();

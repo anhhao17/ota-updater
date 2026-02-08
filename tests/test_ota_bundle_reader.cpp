@@ -1,13 +1,11 @@
-#include <gtest/gtest.h>
-
 #include "ota/ota_bundle_reader.hpp"
 #include "testing.hpp"
 
 #include <archive.h>
 #include <archive_entry.h>
-
 #include <array>
 #include <cstdint>
+#include <gtest/gtest.h>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -29,7 +27,8 @@ std::vector<std::uint8_t> BuildTar(const std::vector<TarEntry>& entries) {
     size_t used = 0;
 
     archive* a = archive_write_new();
-    if (!a) throw std::runtime_error("archive_write_new failed");
+    if (!a)
+        throw std::runtime_error("archive_write_new failed");
     if (archive_write_set_format_pax_restricted(a) != ARCHIVE_OK) {
         (void)archive_write_free(a);
         throw std::runtime_error("archive_write_set_format_pax_restricted failed");
@@ -80,7 +79,8 @@ std::string ReadAll(IReader& reader) {
     std::array<std::uint8_t, 128> buf{};
     while (true) {
         const ssize_t n = reader.Read(std::span<std::uint8_t>(buf.data(), buf.size()));
-        if (n <= 0) break;
+        if (n <= 0)
+            break;
         out.append(reinterpret_cast<const char*>(buf.data()), static_cast<size_t>(n));
     }
     return out;

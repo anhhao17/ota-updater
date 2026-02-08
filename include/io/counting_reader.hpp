@@ -1,20 +1,23 @@
 #pragma once
 #include "io/io.hpp"
+
 #include <cstdint>
 #include <memory>
 
 namespace flash {
 
 class CountingReader final : public IReader {
-public:
-    explicit CountingReader(std::unique_ptr<IReader> inner, std::uint64_t* external_counter = nullptr)
+  public:
+    explicit CountingReader(std::unique_ptr<IReader> inner,
+                            std::uint64_t* external_counter = nullptr)
         : inner_(std::move(inner)), external_(external_counter) {}
 
     ssize_t Read(std::span<std::uint8_t> out) override {
         const ssize_t n = inner_->Read(out);
         if (n > 0) {
             read_ += static_cast<std::uint64_t>(n);
-            if (external_) *external_ = read_;
+            if (external_)
+                *external_ = read_;
         }
         return n;
     }
@@ -25,7 +28,7 @@ public:
         return inner_ ? inner_->TotalSize() : std::nullopt;
     }
 
-private:
+  private:
     std::unique_ptr<IReader> inner_;
     std::uint64_t read_ = 0;
     std::uint64_t* external_ = nullptr;

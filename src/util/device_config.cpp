@@ -1,8 +1,7 @@
 #include "util/device_config.hpp"
 
-#include <nlohmann/json.hpp>
-
 #include <fstream>
+#include <nlohmann/json.hpp>
 #include <string>
 
 namespace flash {
@@ -11,8 +10,10 @@ namespace {
 
 bool GetString(const nlohmann::json& j, const char* key, std::string& out) {
     auto it = j.find(key);
-    if (it == j.end()) return false;
-    if (!it->is_string()) return false;
+    if (it == j.end())
+        return false;
+    if (!it->is_string())
+        return false;
     out = it->get<std::string>();
     return true;
 }

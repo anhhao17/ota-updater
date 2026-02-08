@@ -9,17 +9,17 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <unistd.h>
 #include <utility>
 #include <vector>
-#include <unistd.h>
 
 namespace testutil {
 
 class TemporaryDirectory {
-public:
+  public:
     TemporaryDirectory() {
         char tpl[] = "/tmp/flash_tool_tests_XXXXXX";
-        char *p = ::mkdtemp(tpl);
+        char* p = ::mkdtemp(tpl);
         if (!p) {
             throw std::runtime_error("mkdtemp failed");
         }
@@ -39,18 +39,19 @@ public:
 
     const std::string& Path() const { return path_; }
 
-private:
+  private:
     std::string path_;
 };
 
 class MemoryReader final : public flash::IReader {
-public:
+  public:
     explicit MemoryReader(std::string data) : data_(data.begin(), data.end()) {}
 
     explicit MemoryReader(std::vector<std::uint8_t> data) : data_(std::move(data)) {}
 
     ssize_t Read(std::span<std::uint8_t> out) override {
-        if (pos_ >= data_.size()) return 0;
+        if (pos_ >= data_.size())
+            return 0;
         const size_t n = std::min(out.size(), data_.size() - pos_);
         std::copy(data_.begin() + static_cast<std::ptrdiff_t>(pos_),
                   data_.begin() + static_cast<std::ptrdiff_t>(pos_ + n),
@@ -63,7 +64,7 @@ public:
         return static_cast<std::uint64_t>(data_.size());
     }
 
-private:
+  private:
     std::vector<std::uint8_t> data_;
     size_t pos_ = 0;
 };

@@ -3,7 +3,6 @@
 #include "io/io.hpp"
 
 #include <archive.h>
-
 #include <string>
 
 namespace flash {

@@ -1,26 +1,22 @@
-#include <gtest/gtest.h>
-
 #include "io/partition_writer.hpp"
-#include "util/result.hpp"
-
 #include "testing.hpp"
+#include "util/result.hpp"
 
 #include <cstdint>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <string>
 #include <vector>
 
 namespace {
 
 class PartitionWriterTests : public ::testing::Test {
-protected:
+  protected:
     testutil::TemporaryDirectory tmp;
 
-    std::string MakePath(const std::string &name) {
-        return tmp.Path() + "/" + name;
-    }
+    std::string MakePath(const std::string& name) { return tmp.Path() + "/" + name; }
 
-    std::vector<std::uint8_t> ReadFile(const std::string &path) {
+    std::vector<std::uint8_t> ReadFile(const std::string& path) {
         std::ifstream is(path, std::ios::binary);
         EXPECT_TRUE(is.good());
         is.seekg(0, std::ios::end);
@@ -47,7 +43,8 @@ TEST_F(PartitionWriterTests, WriteAll_WritesExactBytes) {
     ASSERT_TRUE(res.ok) << res.msg;
 
     std::vector<std::uint8_t> data(1024 * 1024 + 123);
-    for (size_t i = 0; i < data.size(); ++i) data[i] = static_cast<std::uint8_t>((i ^ 0x5A) & 0xFF);
+    for (size_t i = 0; i < data.size(); ++i)
+        data[i] = static_cast<std::uint8_t>((i ^ 0x5A) & 0xFF);
 
     auto wr = w.WriteAll(std::span<const std::uint8_t>(data.data(), data.size()));
     ASSERT_TRUE(wr.ok) << wr.msg;

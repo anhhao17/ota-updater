@@ -6,14 +6,14 @@
 namespace flash::config {
 
 class SkytrackConfigFromFile {
-public:
+  public:
     std::string rootfs_part_a;
     std::string rootfs_part_b;
 
     std::optional<std::uint64_t> fsync_interval_bytes;
     std::optional<bool> progress;
 
-    bool LoadFile(const std::string &path);
+    bool LoadFile(const std::string& path);
 
     void Reset();
 };

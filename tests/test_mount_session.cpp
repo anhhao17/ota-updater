@@ -1,7 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "ota/mount_session.hpp"
 
+#include <gtest/gtest.h>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -10,7 +9,7 @@ namespace flash {
 namespace {
 
 class FakeSystemOps final : public MountSession::ISystemOps {
-public:
+  public:
     Result create_result = Result::Ok();
     Result mount_result = Result::Ok();
     Result unmount_result = Result::Ok();
@@ -21,14 +20,17 @@ public:
     mutable int unmount_calls = 0;
     mutable int remove_calls = 0;
 
-    Result CreateMountPoint(std::string_view, std::string_view, std::string& out_dir) const override {
+    Result
+    CreateMountPoint(std::string_view, std::string_view, std::string& out_dir) const override {
         ++create_calls;
-        if (!create_result.is_ok()) return create_result;
+        if (!create_result.is_ok())
+            return create_result;
         out_dir = created_dir;
         return Result::Ok();
     }
 
-    Result Mount(std::string_view, std::string_view, std::string_view, unsigned long) const override {
+    Result
+    Mount(std::string_view, std::string_view, std::string_view, unsigned long) const override {
         ++mount_calls;
         return mount_result;
     }
@@ -38,9 +40,7 @@ public:
         return unmount_result;
     }
 
-    void RemoveDirectory(std::string_view) const override {
-        ++remove_calls;
-    }
+    void RemoveDirectory(std::string_view) const override { ++remove_calls; }
 };
 
 TEST(MountSessionTest, MountAndUnmountSuccess) {
@@ -78,7 +78,8 @@ TEST(MountSessionTest, MountFailureCleansMountPoint) {
 TEST(MountSessionTest, UnmountFailureKeepsState) {
     auto ops = std::make_shared<FakeSystemOps>();
     MountSession session(ops);
-    ASSERT_TRUE(MountSession::MountDevice("/dev/mock", "/mnt", "ota-", "ext4", 0UL, session).is_ok());
+    ASSERT_TRUE(
+        MountSession::MountDevice("/dev/mock", "/mnt", "ota-", "ext4", 0UL, session).is_ok());
 
     ops->unmount_result = Result::Fail(16, "busy");
     auto unmount_res = session.Unmount();
@@ -106,7 +107,8 @@ TEST(MountSessionTest, CreateMountPointFailureIsPropagated) {
 TEST(MountSessionTest, MoveTransfersActiveSession) {
     auto ops = std::make_shared<FakeSystemOps>();
     MountSession original(ops);
-    ASSERT_TRUE(MountSession::MountDevice("/dev/mock", "/mnt", "ota-", "ext4", 0UL, original).is_ok());
+    ASSERT_TRUE(
+        MountSession::MountDevice("/dev/mock", "/mnt", "ota-", "ext4", 0UL, original).is_ok());
 
     MountSession moved(std::move(original));
     EXPECT_EQ(moved.Dir(), ops->created_dir);

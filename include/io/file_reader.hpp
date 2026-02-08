@@ -12,13 +12,13 @@
 namespace flash {
 
 class FileOrStdinReader final : public IReader {
-public:
-    static Result Open(std::string path, FileOrStdinReader &out);
+  public:
+    static Result Open(std::string path, FileOrStdinReader& out);
 
     std::optional<std::uint64_t> TotalSize() const override;
     ssize_t Read(std::span<std::uint8_t> out) override;
 
-private:
+  private:
     std::string path_;
     Fd fd_;
     std::optional<std::uint64_t> size_;

@@ -1,9 +1,10 @@
 #include "io/gzip_reader.hpp"
+
 #include <stdexcept>
 
 namespace flash {
 
-GzipReader::GzipReader(std::unique_ptr<IReader> source) 
+GzipReader::GzipReader(std::unique_ptr<IReader> source)
     : source_(std::move(source)), in_buffer_(16384) {
     strm_.zalloc = Z_NULL;
     strm_.zfree = Z_NULL;
@@ -17,12 +18,11 @@ GzipReader::GzipReader(std::unique_ptr<IReader> source)
     }
 }
 
-GzipReader::~GzipReader() {
-    inflateEnd(&strm_);
-}
+GzipReader::~GzipReader() { inflateEnd(&strm_); }
 
 ssize_t GzipReader::Read(std::span<std::uint8_t> out) {
-    if (eof_reached_) return 0;
+    if (eof_reached_)
+        return 0;
 
     strm_.next_out = out.data();
     strm_.avail_out = static_cast<uInt>(out.size());
@@ -30,10 +30,11 @@ ssize_t GzipReader::Read(std::span<std::uint8_t> out) {
     while (strm_.avail_out > 0) {
         if (strm_.avail_in == 0) {
             ssize_t n = source_->Read(in_buffer_);
-            if (n < 0) return -1; 
+            if (n < 0)
+                return -1;
             if (n == 0) {
                 // Source exhausted. If zlib hasn't finished, it's a truncated file.
-                break; 
+                break;
             }
             strm_.avail_in = static_cast<uInt>(n);
             strm_.next_in = in_buffer_.data();
@@ -50,8 +51,10 @@ ssize_t GzipReader::Read(std::span<std::uint8_t> out) {
                 // Drain remaining source bytes so downstream hash sees full entry.
                 while (true) {
                     const ssize_t n = source_->Read(in_buffer_);
-                    if (n < 0) return -1;
-                    if (n == 0) break;
+                    if (n < 0)
+                        return -1;
+                    if (n == 0)
+                        break;
                 }
                 drained_source_ = true;
             }
@@ -62,7 +65,7 @@ ssize_t GzipReader::Read(std::span<std::uint8_t> out) {
         if (ret != Z_OK && ret != Z_BUF_ERROR) {
             return -1;
         }
-        
+
         // If we made no progress and have no more input, stop to avoid infinite loop
         if (ret == Z_BUF_ERROR && strm_.avail_in == 0) {
             break;
@@ -70,11 +73,11 @@ ssize_t GzipReader::Read(std::span<std::uint8_t> out) {
     }
 
     size_t produced = out.size() - strm_.avail_out;
-    
-    // Safety: If we produced 0 bytes but haven't reached Z_STREAM_END, 
+
+    // Safety: If we produced 0 bytes but haven't reached Z_STREAM_END,
     // and the source is dead, then it's an actual error/EOF.
     if (produced == 0 && !eof_reached_) {
-        return 0; 
+        return 0;
     }
 
     return static_cast<ssize_t>(produced);

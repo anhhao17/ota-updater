@@ -6,11 +6,9 @@ namespace flash {
 
 Fd::Fd(int fd) : fd_(fd) {}
 
-Fd::Fd(Fd &&other) noexcept : fd_(other.fd_) {
-    other.fd_ = -1;
-}
+Fd::Fd(Fd&& other) noexcept : fd_(other.fd_) { other.fd_ = -1; }
 
-Fd &Fd::operator=(Fd &&other) noexcept {
+Fd& Fd::operator=(Fd&& other) noexcept {
     if (this != &other) {
         Close();
         fd_ = other.fd_;
@@ -19,17 +17,11 @@ Fd &Fd::operator=(Fd &&other) noexcept {
     return *this;
 }
 
-Fd::~Fd() {
-    Close();
-}
+Fd::~Fd() { Close(); }
 
-int Fd::Get() const {
-    return fd_;
-}
+int Fd::Get() const { return fd_; }
 
-bool Fd::Valid() const {
-    return fd_ >= 0;
-}
+bool Fd::Valid() const { return fd_ >= 0; }
 
 void Fd::Reset(int fd) {
     Close();

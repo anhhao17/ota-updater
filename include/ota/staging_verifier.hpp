@@ -12,7 +12,7 @@ namespace flash {
 class Fd;
 
 class TempFile {
-public:
+  public:
     static Result Create(TempFile& out);
 
     TempFile();
@@ -26,7 +26,7 @@ public:
     const std::string& Path() const;
     void Close();
 
-private:
+  private:
     void Cleanup();
 
     Fd fd_;
@@ -39,7 +39,7 @@ struct StagedEntry {
 };
 
 class OtaEntryStager {
-public:
+  public:
     Result StageAndVerify(std::unique_ptr<IReader>& entry_reader,
                           const std::string& expected_sha256,
                           StagedEntry& out) const;

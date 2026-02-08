@@ -12,7 +12,8 @@ namespace {
 constexpr size_t kArchiveReadBufferSize = 64 * 1024;
 
 std::string ArchiveErrorText(struct archive* ar) {
-    if (!ar) return "unknown";
+    if (!ar)
+        return "unknown";
     const char* em = archive_error_string(ar);
     return em ? std::string(em) : std::string("unknown");
 }
@@ -31,10 +32,12 @@ OtaTarBundleReader::~OtaTarBundleReader() {
 }
 
 Result OtaTarBundleReader::Open(IReader& src) {
-    if (opened_) return Result::Fail(-1, "Bundle already opened");
+    if (opened_)
+        return Result::Fail(-1, "Bundle already opened");
 
     ar_ = archive_read_new();
-    if (!ar_) return Result::Fail(-1, "archive_read_new failed");
+    if (!ar_)
+        return Result::Fail(-1, "archive_read_new failed");
 
     archive_read_support_format_tar(ar_);
 
@@ -51,7 +54,8 @@ Result OtaTarBundleReader::Open(IReader& src) {
     auto read_cb = [](archive*, void* cd, const void** buff) -> la_ssize_t {
         auto* c = static_cast<Ctx*>(cd);
         const ssize_t n = c->r->Read(std::span<std::uint8_t>(c->buf.data(), c->buf.size()));
-        if (n < 0) return -1;
+        if (n < 0)
+            return -1;
         *buff = c->buf.data();
         return static_cast<la_ssize_t>(n); // 0 => EOF
     };
@@ -64,9 +68,9 @@ Result OtaTarBundleReader::Open(IReader& src) {
 
     if (archive_read_open2(ar_,
                            ctx.get(),
-                           /*open*/nullptr,
+                           /*open*/ nullptr,
                            read_cb,
-                           /*skip*/nullptr,
+                           /*skip*/ nullptr,
                            close_cb) != ARCHIVE_OK) {
         Result fail = ArchiveFailure(ar_, "archive_read_open2 failed");
         archive_read_free(ar_);
@@ -81,7 +85,8 @@ Result OtaTarBundleReader::Open(IReader& src) {
 
 Result OtaTarBundleReader::Next(BundleEntryInfo& out, bool& eof) {
     eof = false;
-    if (!opened_ || !ar_) return Result::Fail(-1, "Bundle not opened");
+    if (!opened_ || !ar_)
+        return Result::Fail(-1, "Bundle not opened");
 
     // If previous entry not fully read, require caller to SkipCurrent()/read to EOF
     if (in_entry_) {
@@ -116,7 +121,8 @@ Result OtaTarBundleReader::Next(BundleEntryInfo& out, bool& eof) {
 }
 
 Result OtaTarBundleReader::SkipCurrent() {
-    if (!in_entry_) return Result::Ok();
+    if (!in_entry_)
+        return Result::Ok();
     if (archive_read_data_skip(ar_) != ARCHIVE_OK) {
         return ArchiveFailure(ar_, "archive_read_data_skip");
     }
@@ -125,13 +131,15 @@ Result OtaTarBundleReader::SkipCurrent() {
 }
 
 Result OtaTarBundleReader::ReadCurrentToString(std::string& out) {
-    if (!in_entry_) return Result::Fail(-1, "No current entry");
+    if (!in_entry_)
+        return Result::Fail(-1, "No current entry");
     out.clear();
 
     std::vector<std::uint8_t> buf(kArchiveReadBufferSize);
     while (true) {
         const la_ssize_t n = archive_read_data(ar_, buf.data(), buf.size());
-        if (n == 0) break;
+        if (n == 0)
+            break;
         if (n < 0) {
             return ArchiveFailure(ar_, "archive_read_data");
         }
@@ -143,15 +151,18 @@ Result OtaTarBundleReader::ReadCurrentToString(std::string& out) {
 }
 
 Result OtaTarBundleReader::OpenCurrentEntryReader(std::unique_ptr<IReader>& out_reader) {
-    if (!in_entry_) return Result::Fail(-1, "No current entry");
+    if (!in_entry_)
+        return Result::Fail(-1, "No current entry");
     out_reader = std::make_unique<EntryReader>(this);
     return Result::Ok();
 }
 
 ssize_t OtaTarBundleReader::EntryReader::Read(std::span<std::uint8_t> out) {
-    if (!parent_ || !parent_->in_entry_) return -1;
+    if (!parent_ || !parent_->in_entry_)
+        return -1;
     const la_ssize_t n = archive_read_data(parent_->ar_, out.data(), out.size());
-    if (n < 0) return -1;
+    if (n < 0)
+        return -1;
     if (n == 0) {
         // entry finished
         parent_->in_entry_ = false;
@@ -161,9 +172,11 @@ ssize_t OtaTarBundleReader::EntryReader::Read(std::span<std::uint8_t> out) {
 }
 
 std::optional<std::uint64_t> OtaTarBundleReader::EntryReader::TotalSize() const {
-    if (!parent_ || !parent_->cur_entry_) return std::nullopt;
+    if (!parent_ || !parent_->cur_entry_)
+        return std::nullopt;
     const la_int64_t sz = archive_entry_size(parent_->cur_entry_);
-    if (sz < 0) return std::nullopt;
+    if (sz < 0)
+        return std::nullopt;
     return static_cast<std::uint64_t>(sz);
 }
 

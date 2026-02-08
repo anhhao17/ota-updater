@@ -5,7 +5,7 @@
 namespace flash {
 
 class VersionComparator {
-public:
+  public:
     static int Compare(const std::string& lhs, const std::string& rhs);
 };
 

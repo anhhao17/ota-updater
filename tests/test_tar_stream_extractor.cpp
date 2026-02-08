@@ -1,16 +1,13 @@
-#include <gtest/gtest.h>
-
 #include "ota/tar_stream_extractor.hpp"
-#include "util/logger.hpp"
-
 #include "testing.hpp"
+#include "util/logger.hpp"
 
 #include <archive.h>
 #include <archive_entry.h>
-
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -32,7 +29,8 @@ std::vector<std::uint8_t> BuildTar(const std::vector<TarEntry>& entries) {
     size_t used = 0;
 
     archive* a = archive_write_new();
-    if (!a) throw std::runtime_error("archive_write_new failed");
+    if (!a)
+        throw std::runtime_error("archive_write_new failed");
     if (archive_write_set_format_pax_restricted(a) != ARCHIVE_OK) {
         (void)archive_write_free(a);
         throw std::runtime_error("archive_write_set_format_pax_restricted failed");
@@ -85,7 +83,7 @@ std::string ReadFile(const std::filesystem::path& p) {
 }
 
 class RecordingProgress final : public IProgress {
-public:
+  public:
     struct Snapshot {
         std::string component;
         std::uint64_t comp_done = 0;
@@ -108,17 +106,15 @@ public:
 };
 
 class TarStreamExtractorTest : public ::testing::Test {
-protected:
+  protected:
     void SetUp() override {
         prev_level_ = flash::Logger::Instance().Level();
         flash::Logger::Instance().SetLevel(flash::LogLevel::Debug);
     }
 
-    void TearDown() override {
-        flash::Logger::Instance().SetLevel(prev_level_);
-    }
+    void TearDown() override { flash::Logger::Instance().SetLevel(prev_level_); }
 
-private:
+  private:
     flash::LogLevel prev_level_{flash::LogLevel::Info};
 };
 

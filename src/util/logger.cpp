@@ -1,8 +1,9 @@
 #include "util/logger.hpp"
+
 #include "ota/progress_sinks.hpp"
 
-#include <cstring>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <mutex>
 
@@ -14,16 +15,22 @@ LogLevel g_level = LogLevel::Info;
 
 const char* ToStr(LogLevel lvl) {
     switch (lvl) {
-        case LogLevel::Debug: return "DEBUG";
-        case LogLevel::Info:  return "INFO";
-        case LogLevel::Warn:  return "WARN";
-        case LogLevel::Error: return "ERROR";
-        default:              return "LOG";
+    case LogLevel::Debug:
+        return "DEBUG";
+    case LogLevel::Info:
+        return "INFO";
+    case LogLevel::Warn:
+        return "WARN";
+    case LogLevel::Error:
+        return "ERROR";
+    default:
+        return "LOG";
     }
 }
 
 void FormatTimestamp(char* buf, size_t buf_len) {
-    if (buf_len == 0) return;
+    if (buf_len == 0)
+        return;
     const std::time_t now = std::time(nullptr);
     std::tm tm{};
     if (localtime_r(&now, &tm) == nullptr) {
@@ -34,7 +41,8 @@ void FormatTimestamp(char* buf, size_t buf_len) {
 }
 
 const char* BaseName(const char* file) {
-    if (!file || *file == '\0') return nullptr;
+    if (!file || *file == '\0')
+        return nullptr;
     const char* slash = std::strrchr(file, '/');
     const char* backslash = std::strrchr(file, '\\');
     const char* base = slash;
@@ -71,29 +79,22 @@ void Logger::VLog(LogLevel lvl, const char* fmt, va_list ap) {
     VLogWithSource(lvl, nullptr, 0, fmt, ap);
 }
 
-void Logger::LogWithSource(LogLevel lvl,
-                           const char* file,
-                           int line,
-                           const char* fmt,
-                           ...) {
+void Logger::LogWithSource(LogLevel lvl, const char* file, int line, const char* fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     VLogWithSource(lvl, file, line, fmt, ap);
     va_end(ap);
 }
 
-void Logger::VLogWithSource(LogLevel lvl,
-                            const char* file,
-                            int line,
-                            const char* fmt,
-                            va_list ap) {
+void Logger::VLogWithSource(LogLevel lvl, const char* file, int line, const char* fmt, va_list ap) {
     LogLevel cur;
     {
         std::lock_guard<std::mutex> lk(g_mu);
         cur = g_level;
     }
 
-    if (lvl < cur) return;
+    if (lvl < cur)
+        return;
 
     // Print to stderr (typical for tools)
     std::lock_guard<std::mutex> lk(g_mu);

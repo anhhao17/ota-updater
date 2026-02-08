@@ -1,13 +1,14 @@
 #pragma once
 
-#include "util/result.hpp"
 #include "ota/update_module.hpp"
+#include "util/result.hpp"
+
 #include <string>
 
 namespace flash {
 
 class OtaInstaller {
-public:
+  public:
     OtaInstaller();
     explicit OtaInstaller(UpdateModule update_module);
 
@@ -15,7 +16,7 @@ public:
 
     Result Run(const std::string& input_path);
 
-private:
+  private:
     UpdateModule update_module_;
     IProgress* progress_sink_ = nullptr;
 };

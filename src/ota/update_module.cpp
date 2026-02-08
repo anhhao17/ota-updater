@@ -1,8 +1,8 @@
 #include "ota/update_module.hpp"
 
-#include "ota/component_installers.hpp"
 #include "io/counting_reader.hpp"
 #include "io/gzip_reader.hpp"
+#include "ota/component_installers.hpp"
 #include "util/logger.hpp"
 
 #include <utility>
@@ -25,12 +25,15 @@ UpdateModule::UpdateModule(std::vector<std::unique_ptr<IInstallerStrategy>> stra
 Result UpdateModule::ExecuteComponent(const Component& comp,
                                       std::unique_ptr<IReader> source,
                                       const Options& opt) {
-    if (!source) return Result::Fail(-1, "Null source reader");
+    if (!source)
+        return Result::Fail(-1, "Null source reader");
 
     const char* tag = comp.name.c_str();
 
     LogInfo("UpdateModule: name=%s type=%s file=%s",
-            comp.name.c_str(), comp.type.c_str(), comp.filename.c_str());
+            comp.name.c_str(),
+            comp.type.c_str(),
+            comp.filename.c_str());
 
     std::uint64_t in_read = 0;
     std::unique_ptr<IReader> effective_reader =
@@ -54,9 +57,8 @@ Result UpdateModule::ExecuteComponent(const Component& comp,
     return Result::Fail(-1, "Unsupported component type: " + comp.type);
 }
 
-Result UpdateModule::Execute(const Component& comp,
-                             std::unique_ptr<IReader> source,
-                             const Options& opt) {
+Result
+UpdateModule::Execute(const Component& comp, std::unique_ptr<IReader> source, const Options& opt) {
     UpdateModule module;
     return module.ExecuteComponent(comp, std::move(source), opt);
 }

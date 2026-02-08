@@ -7,17 +7,17 @@
 namespace flash {
 
 class FileProgressSink final : public IProgress {
-public:
+  public:
     explicit FileProgressSink(std::string path);
 
     void OnProgress(const ProgressEvent& e) override;
 
-private:
+  private:
     std::string path_;
 };
 
 class ConsoleProgressSink final : public IProgress {
-public:
+  public:
     ConsoleProgressSink() = default;
 
     void OnProgress(const ProgressEvent& e) override;

@@ -8,7 +8,7 @@
 namespace flash {
 
 class ManifestParser {
-public:
+  public:
     std::expected<Manifest, std::string> Parse(const std::string& json_input) const;
 };
 

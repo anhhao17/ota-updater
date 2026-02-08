@@ -3,7 +3,6 @@
 #include "util/config_parser.hpp"
 
 #include <nlohmann/json.hpp>
-
 #include <string>
 
 namespace flash::config::detail {

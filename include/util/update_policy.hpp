@@ -7,7 +7,7 @@
 namespace flash {
 
 class UpdatePolicy {
-public:
+  public:
     static bool ShouldUpdate(const Component& comp,
                              const Manifest& manifest,
                              const std::string& current_version);

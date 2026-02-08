@@ -12,7 +12,7 @@
 namespace flash {
 
 class ArchiveInstaller {
-public:
+  public:
     struct Options {
         bool progress = true;
         std::uint64_t progress_interval_bytes = 4 * 1024 * 1024ULL;
@@ -31,12 +31,14 @@ public:
         unsigned long mount_flags = 0;
     };
 
-    ArchiveInstaller();                 // default
+    ArchiveInstaller(); // default
     explicit ArchiveInstaller(Options opt);
 
-    Result InstallTarStreamToTarget(IReader& tar_stream, std::string_view install_to, std::string_view tag);
+    Result InstallTarStreamToTarget(IReader& tar_stream,
+                                    std::string_view install_to,
+                                    std::string_view tag);
 
-private:
+  private:
     Options opt_{};
 };
 

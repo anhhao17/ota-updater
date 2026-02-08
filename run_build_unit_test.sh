@@ -45,6 +45,14 @@ cmake -S . -B "$HOST_TEST_BUILD_DIR" \
 cmake --build "$HOST_TEST_BUILD_DIR" -j
 ctest --test-dir "$HOST_TEST_BUILD_DIR" --output-on-failure
 
+if [[ "${RUN_FORMAT_CHECK:-0}" == "1" ]]; then
+  ./scripts/clang_format.sh check
+fi
+
+if [[ "${RUN_STATIC_SCAN:-0}" == "1" ]]; then
+  ./scripts/static_scan.sh "$HOST_TEST_BUILD_DIR"
+fi
+
 # test on device
 ./ota.sh
 

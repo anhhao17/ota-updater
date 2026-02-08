@@ -7,14 +7,13 @@
 namespace flash {
 
 int VersionComparator::Compare(const std::string& lhs, const std::string& rhs) {
-    if (lhs == rhs) return 0;
+    if (lhs == rhs)
+        return 0;
 
-    auto lhs_parts = lhs | std::views::split('.') | std::views::transform([](auto&& rng) {
-        return std::string_view(rng);
-    });
-    auto rhs_parts = rhs | std::views::split('.') | std::views::transform([](auto&& rng) {
-        return std::string_view(rng);
-    });
+    auto lhs_parts = lhs | std::views::split('.') |
+                     std::views::transform([](auto&& rng) { return std::string_view(rng); });
+    auto rhs_parts = rhs | std::views::split('.') |
+                     std::views::transform([](auto&& rng) { return std::string_view(rng); });
 
     auto it_lhs = lhs_parts.begin();
     auto it_rhs = rhs_parts.begin();
@@ -35,8 +34,10 @@ int VersionComparator::Compare(const std::string& lhs, const std::string& rhs) {
             ++it_rhs;
         }
 
-        if (lhs_val > rhs_val) return 1;
-        if (lhs_val < rhs_val) return -1;
+        if (lhs_val > rhs_val)
+            return 1;
+        if (lhs_val < rhs_val)
+            return -1;
     }
 
     return 0;

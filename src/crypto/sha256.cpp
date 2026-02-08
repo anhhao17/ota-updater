@@ -2,10 +2,9 @@
 
 #include "io/file_reader.hpp"
 
-#include <openssl/evp.h>
-
 #include <array>
 #include <cstdint>
+#include <openssl/evp.h>
 #include <vector>
 
 namespace flash {
@@ -24,18 +23,19 @@ std::string HexEncode(std::span<const std::uint8_t> bytes) {
 }
 
 class EvpCtx final {
-public:
+  public:
     EvpCtx() : ctx_(EVP_MD_CTX_new()) {}
     EvpCtx(const EvpCtx&) = delete;
     EvpCtx& operator=(const EvpCtx&) = delete;
     ~EvpCtx() {
-        if (ctx_) EVP_MD_CTX_free(ctx_);
+        if (ctx_)
+            EVP_MD_CTX_free(ctx_);
     }
 
     EVP_MD_CTX* get() const { return ctx_; }
     bool ok() const { return ctx_ != nullptr; }
 
-private:
+  private:
     EVP_MD_CTX* ctx_ = nullptr;
 };
 
@@ -44,13 +44,15 @@ bool InitSha256(EvpCtx& ctx) {
 }
 
 bool UpdateSha256(EvpCtx& ctx, std::span<const std::uint8_t> data) {
-    if (data.empty()) return true;
+    if (data.empty())
+        return true;
     return EVP_DigestUpdate(ctx.get(), data.data(), data.size()) == 1;
 }
 
 bool FinalSha256(EvpCtx& ctx, std::array<std::uint8_t, 32>& out) {
     unsigned int len = 0;
-    if (EVP_DigestFinal_ex(ctx.get(), out.data(), &len) != 1) return false;
+    if (EVP_DigestFinal_ex(ctx.get(), out.data(), &len) != 1)
+        return false;
     return len == out.size();
 }
 
@@ -73,54 +75,66 @@ Sha256Hasher& Sha256Hasher::operator=(Sha256Hasher&&) noexcept = default;
 Sha256Hasher::~Sha256Hasher() = default;
 
 void Sha256Hasher::Update(std::span<const std::uint8_t> data) {
-    if (!impl_ || !impl_->initialized || impl_->finalized) return;
+    if (!impl_ || !impl_->initialized || impl_->finalized)
+        return;
     if (!UpdateSha256(impl_->ctx, data)) {
         impl_->finalized = true;
     }
 }
 
 std::string Sha256Hasher::FinalHex() {
-    if (!impl_ || !impl_->initialized || impl_->finalized) return {};
+    if (!impl_ || !impl_->initialized || impl_->finalized)
+        return {};
     impl_->finalized = true;
     std::array<std::uint8_t, 32> digest{};
-    if (!FinalSha256(impl_->ctx, digest)) return {};
+    if (!FinalSha256(impl_->ctx, digest))
+        return {};
     return HexEncode(digest);
 }
 
 std::string Sha256Hex(std::span<const std::uint8_t> data) {
     EvpCtx ctx;
-    if (!InitSha256(ctx)) return {};
-    if (!UpdateSha256(ctx, data)) return {};
+    if (!InitSha256(ctx))
+        return {};
+    if (!UpdateSha256(ctx, data))
+        return {};
     std::array<std::uint8_t, 32> digest{};
-    if (!FinalSha256(ctx, digest)) return {};
+    if (!FinalSha256(ctx, digest))
+        return {};
     return HexEncode(digest);
 }
 
 std::string Sha256Hex(IReader& reader) {
     EvpCtx ctx;
-    if (!InitSha256(ctx)) return {};
+    if (!InitSha256(ctx))
+        return {};
 
     std::vector<std::uint8_t> buf(64 * 1024);
     while (true) {
         const ssize_t n = reader.Read(std::span<std::uint8_t>(buf.data(), buf.size()));
-        if (n == 0) break;
-        if (n < 0) return {};
+        if (n == 0)
+            break;
+        if (n < 0)
+            return {};
         if (!UpdateSha256(ctx, std::span<const std::uint8_t>(buf.data(), static_cast<size_t>(n)))) {
             return {};
         }
     }
 
     std::array<std::uint8_t, 32> digest{};
-    if (!FinalSha256(ctx, digest)) return {};
+    if (!FinalSha256(ctx, digest))
+        return {};
     return HexEncode(digest);
 }
 
 Result Sha256HexFile(const std::string& path, std::string& out_hex) {
     FileOrStdinReader reader;
     auto r = FileOrStdinReader::Open(path, reader);
-    if (!r.ok) return Result::Fail(-1, r.msg);
+    if (!r.ok)
+        return Result::Fail(-1, r.msg);
     out_hex = Sha256Hex(reader);
-    if (out_hex.empty()) return Result::Fail(-1, "sha256 failed");
+    if (out_hex.empty())
+        return Result::Fail(-1, "sha256 failed");
     return Result::Ok();
 }
 

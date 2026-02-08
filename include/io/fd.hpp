@@ -3,7 +3,7 @@
 namespace flash {
 
 class Fd {
-public:
+  public:
     Fd() = default;
     explicit Fd(int fd);
 
@@ -21,7 +21,7 @@ public:
     void Reset(int fd);
     void Close();
 
-private:
+  private:
     int fd_{-1};
 };
 

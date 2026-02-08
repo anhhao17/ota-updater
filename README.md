@@ -13,6 +13,27 @@ A small OTA installer tool with slot-aware manifest selection, SHA-256 verificat
 ./setup_and_build.sh
 ```
 
+## Formatting And Static Scan
+Run format check:
+```bash
+./scripts/clang_format.sh check
+```
+
+Apply formatting:
+```bash
+./scripts/clang_format.sh fix
+```
+
+Run static analysis (clang-tidy/cppcheck if installed):
+```bash
+./scripts/static_scan.sh build
+```
+
+Optional in `run_build_unit_test.sh`:
+```bash
+RUN_FORMAT_CHECK=1 RUN_STATIC_SCAN=1 ./run_build_unit_test.sh
+```
+
 ## Run
 ```
 ./build/flash_tool -i ota_sample/ota.tar

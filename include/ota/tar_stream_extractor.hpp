@@ -11,7 +11,7 @@
 namespace flash {
 
 class TarStreamExtractor {
-public:
+  public:
     struct Options {
         bool progress = true;
         std::uint64_t progress_interval_bytes = 4 * 1024 * 1024ULL;
@@ -26,9 +26,10 @@ public:
     TarStreamExtractor() = default;
     explicit TarStreamExtractor(Options opt) : opt_(opt) {}
 
-    Result ExtractToDir(IReader& tar_stream, const std::string& dst_dir, std::string_view tag) const;
+    Result
+    ExtractToDir(IReader& tar_stream, const std::string& dst_dir, std::string_view tag) const;
 
-private:
+  private:
     Options opt_{};
 };
 

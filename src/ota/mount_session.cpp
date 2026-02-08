@@ -15,7 +15,7 @@ namespace flash {
 namespace {
 
 class PosixSystemOps final : public MountSession::ISystemOps {
-public:
+  public:
     Result CreateMountPoint(std::string_view mount_base_dir,
                             std::string_view mount_prefix,
                             std::string& out_dir) const override {
@@ -77,8 +77,7 @@ MountSession::MountSession(std::shared_ptr<const ISystemOps> system_ops)
     : system_ops_(system_ops ? std::move(system_ops) : DefaultSystemOps()) {}
 
 MountSession::MountSession(MountSession&& other) noexcept
-    : system_ops_(std::move(other.system_ops_)),
-      dir_(std::move(other.dir_)),
+    : system_ops_(std::move(other.system_ops_)), dir_(std::move(other.dir_)),
       mounted_(other.mounted_) {
     other.mounted_ = false;
     other.dir_.clear();
@@ -86,7 +85,8 @@ MountSession::MountSession(MountSession&& other) noexcept
 }
 
 MountSession& MountSession::operator=(MountSession&& other) noexcept {
-    if (this == &other) return *this;
+    if (this == &other)
+        return *this;
     Cleanup();
     system_ops_ = std::move(other.system_ops_);
     dir_ = std::move(other.dir_);
@@ -97,9 +97,7 @@ MountSession& MountSession::operator=(MountSession&& other) noexcept {
     return *this;
 }
 
-MountSession::~MountSession() {
-    Cleanup();
-}
+MountSession::~MountSession() { Cleanup(); }
 
 Result MountSession::MountDevice(std::string_view device,
                                  std::string_view mount_base_dir,
@@ -126,10 +124,12 @@ Result MountSession::MountDevice(std::string_view device,
 }
 
 Result MountSession::Unmount() {
-    if (!mounted_ || dir_.empty()) return Result::Ok();
+    if (!mounted_ || dir_.empty())
+        return Result::Ok();
 
     auto unmount_result = system_ops_->Unmount(dir_);
-    if (!unmount_result.is_ok()) return unmount_result;
+    if (!unmount_result.is_ok())
+        return unmount_result;
 
     mounted_ = false;
     system_ops_->RemoveDirectory(dir_);

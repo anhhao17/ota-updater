@@ -15,7 +15,7 @@ std::string Sha256Hex(IReader& reader);
 Result Sha256HexFile(const std::string& path, std::string& out_hex);
 
 class Sha256Hasher {
-public:
+  public:
     Sha256Hasher();
     Sha256Hasher(const Sha256Hasher&) = delete;
     Sha256Hasher& operator=(const Sha256Hasher&) = delete;
@@ -26,7 +26,7 @@ public:
     void Update(std::span<const std::uint8_t> data);
     std::string FinalHex();
 
-private:
+  private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };

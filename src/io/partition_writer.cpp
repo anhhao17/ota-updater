@@ -1,17 +1,17 @@
 // partition_writer.cpp - Writer implementation for block device/partition path.
 
 #include "io/partition_writer.hpp"
+
 #include "util/path_utils.hpp"
 
 #include <cerrno>
 #include <cstring>
-
 #include <fcntl.h>
 #include <unistd.h>
 
 namespace flash {
 
-Result PartitionWriter::Open(std::string path, PartitionWriter &out) {
+Result PartitionWriter::Open(std::string path, PartitionWriter& out) {
     out.path_ = std::move(path);
 
     // O_WRONLY is enough for MVP; later you can add O_SYNC / O_DIRECT options.
@@ -22,8 +22,7 @@ Result PartitionWriter::Open(std::string path, PartitionWriter &out) {
     int fd = ::open(out.path_.c_str(), flags, 0644);
     if (fd < 0) {
         return Result::Fail(
-            errno,
-            "Failed to open output: " + out.path_ + " (" + std::strerror(errno) + ")");
+            errno, "Failed to open output: " + out.path_ + " (" + std::strerror(errno) + ")");
     }
     out.fd_.Reset(fd);
     return Result::Ok();
@@ -31,7 +30,7 @@ Result PartitionWriter::Open(std::string path, PartitionWriter &out) {
 
 Result PartitionWriter::WriteAll(std::span<const std::uint8_t> in) {
     size_t rem = in.size();
-    const std::uint8_t *p = in.data();
+    const std::uint8_t* p = in.data();
 
     while (rem > 0) {
         ssize_t n = ::write(fd_.Get(), p, rem);

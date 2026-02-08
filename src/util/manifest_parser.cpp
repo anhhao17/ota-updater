@@ -1,8 +1,7 @@
 #include "util/manifest_parser.hpp"
 
-#include <nlohmann/json.hpp>
-
 #include <cstring>
+#include <nlohmann/json.hpp>
 
 namespace flash {
 
@@ -62,12 +61,14 @@ std::expected<Manifest, std::string> ManifestParser::Parse(const std::string& js
 
         if (j.contains("components")) {
             auto parsed = ParseComponentsArray(j["components"]);
-            if (!parsed) return std::unexpected(parsed.error());
+            if (!parsed)
+                return std::unexpected(parsed.error());
             m.components = std::move(*parsed);
         }
 
         for (const auto& [key, val] : j.items()) {
-            if (!StartsWith(key, "slot-")) continue;
+            if (!StartsWith(key, "slot-"))
+                continue;
             if (!val.is_object()) {
                 return std::unexpected("slot section must be object: " + key);
             }
@@ -75,7 +76,8 @@ std::expected<Manifest, std::string> ManifestParser::Parse(const std::string& js
                 return std::unexpected("slot section missing components: " + key);
             }
             auto parsed = ParseComponentsArray(val["components"]);
-            if (!parsed) return std::unexpected(parsed.error());
+            if (!parsed)
+                return std::unexpected(parsed.error());
             m.slot_components.emplace(key, std::move(*parsed));
         }
 

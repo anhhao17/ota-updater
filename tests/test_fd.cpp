@@ -1,8 +1,7 @@
-#include <gtest/gtest.h>
-
 #include "io/fd.hpp"
 
 #include <fcntl.h>
+#include <gtest/gtest.h>
 #include <unistd.h>
 
 namespace {

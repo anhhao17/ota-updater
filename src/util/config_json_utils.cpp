@@ -8,26 +8,33 @@ namespace {
 
 bool GetStringIfPresent(const nlohmann::json& j, const char* key, std::string& out) {
     auto it = j.find(key);
-    if (it == j.end()) return false;
-    if (!it->is_string()) return false;
+    if (it == j.end())
+        return false;
+    if (!it->is_string())
+        return false;
     out = it->get<std::string>();
     return true;
 }
 
 bool GetU64IfPresent(const nlohmann::json& j, const char* key, std::uint64_t& out) {
     auto it = j.find(key);
-    if (it == j.end()) return false;
-    if (!(it->is_number_unsigned() || it->is_number_integer())) return false;
+    if (it == j.end())
+        return false;
+    if (!(it->is_number_unsigned() || it->is_number_integer()))
+        return false;
     auto v = it->get<long long>();
-    if (v < 0) return false;
+    if (v < 0)
+        return false;
     out = static_cast<std::uint64_t>(v);
     return true;
 }
 
 bool GetBoolIfPresent(const nlohmann::json& j, const char* key, bool& out) {
     auto it = j.find(key);
-    if (it == j.end()) return false;
-    if (!it->is_boolean()) return false;
+    if (it == j.end())
+        return false;
+    if (!it->is_boolean())
+        return false;
     out = it->get<bool>();
     return true;
 }

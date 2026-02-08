@@ -14,7 +14,7 @@ struct ProgressEvent {
 };
 
 class IProgress {
-public:
+  public:
     virtual ~IProgress() = default;
     virtual void OnProgress(const ProgressEvent& e) = 0;
 };

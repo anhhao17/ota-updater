@@ -1,5 +1,6 @@
-#include <gtest/gtest.h>
 #include "util/manifest.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace flash;
 
@@ -7,7 +8,7 @@ TEST(ManifestTest, VersionComparisonLogic) {
     // Standard cases
     EXPECT_EQ(ManifestHandler::CompareVersions("1.2.3", "1.2.2"), 1);
     EXPECT_EQ(ManifestHandler::CompareVersions("1.0.0", "2.0.0"), -1);
-    
+
     EXPECT_EQ(ManifestHandler::CompareVersions("1.2", "1.2.0"), 0);
     EXPECT_EQ(ManifestHandler::CompareVersions("1.2.1", "1.2"), 1);
     EXPECT_EQ(ManifestHandler::CompareVersions("2", "1.9.9"), 1);
@@ -19,7 +20,7 @@ TEST(ManifestTest, VersionComparisonLogic) {
 TEST(ManifestTest, ShouldUpdateLogic) {
     Manifest m;
     m.hw_compatibility = "orin-nano";
-    
+
     Component c;
     c.name = "kernel";
     c.version = "2.0.0";

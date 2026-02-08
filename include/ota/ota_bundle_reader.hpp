@@ -5,7 +5,6 @@
 
 #include <archive.h>
 #include <archive_entry.h>
-
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -20,7 +19,7 @@ struct BundleEntryInfo {
 };
 
 class OtaTarBundleReader {
-public:
+  public:
     OtaTarBundleReader() = default;
     ~OtaTarBundleReader();
 
@@ -38,13 +37,14 @@ public:
     Result ReadCurrentToString(std::string& out);
 
     // Open a reader that streams current entry data using archive_read_data().
-    // Note: libarchive requires sequential access; you must finish reading (EOF) before calling Next().
+    // Note: libarchive requires sequential access; you must finish reading (EOF) before calling
+    // Next().
     Result OpenCurrentEntryReader(std::unique_ptr<IReader>& out_reader);
 
     // Skip any remaining bytes of current entry.
     Result SkipCurrent();
 
-private:
+  private:
     static Result FailMsg(const std::string& msg) { return Result::Fail(-1, msg); }
 
     bool opened_ = false;
@@ -53,12 +53,12 @@ private:
     bool in_entry_ = false;
 
     class EntryReader final : public IReader {
-    public:
+      public:
         explicit EntryReader(OtaTarBundleReader* parent) : parent_(parent) {}
         ssize_t Read(std::span<std::uint8_t> out) override;
         std::optional<std::uint64_t> TotalSize() const override;
 
-    private:
+      private:
         OtaTarBundleReader* parent_ = nullptr;
     };
 };

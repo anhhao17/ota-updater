@@ -10,18 +10,17 @@
 namespace flash {
 
 class IReader {
-public:
+  public:
     virtual ~IReader() = default;
     virtual ssize_t Read(std::span<std::uint8_t> out) = 0;
     virtual std::optional<std::uint64_t> TotalSize() const { return std::nullopt; }
 };
 
 class IWriter {
-public:
+  public:
     virtual ~IWriter() = default;
     virtual Result WriteAll(std::span<const std::uint8_t> in) = 0;
     virtual Result FsyncNow() = 0;
 };
-
 
 } // namespace flash

@@ -1,12 +1,11 @@
 #include "ota/tar_stream_extractor.hpp"
 
 #include "ota/archive_path_policy.hpp"
-#include "util/logger.hpp"
 #include "ota/tar_stream_reader_adapter.hpp"
+#include "util/logger.hpp"
 
 #include <archive.h>
 #include <archive_entry.h>
-
 #include <filesystem>
 #include <memory>
 
@@ -16,13 +15,15 @@ namespace {
 
 struct ArchiveReadDeleter {
     void operator()(archive* a) const {
-        if (a) archive_read_free(a);
+        if (a)
+            archive_read_free(a);
     }
 };
 
 struct ArchiveWriteDeleter {
     void operator()(archive* a) const {
-        if (a) archive_write_free(a);
+        if (a)
+            archive_write_free(a);
     }
 };
 
@@ -36,7 +37,8 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
     const fs::path base_dir(dst_dir);
 
     std::unique_ptr<archive, ArchiveReadDeleter> ar(archive_read_new());
-    if (!ar) return Result::Fail(-1, "archive_read_new failed");
+    if (!ar)
+        return Result::Fail(-1, "archive_read_new failed");
 
     archive_read_support_filter_all(ar.get());
     archive_read_support_format_all(ar.get());
@@ -46,7 +48,8 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
     }
 
     std::unique_ptr<archive, ArchiveWriteDeleter> aw(archive_write_disk_new());
-    if (!aw) return Result::Fail(-1, "archive_write_disk_new failed");
+    if (!aw)
+        return Result::Fail(-1, "archive_write_disk_new failed");
 
     int flags = 0;
     flags |= ARCHIVE_EXTRACT_UNLINK;
@@ -84,9 +87,12 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
             event.overall_done = opt_.overall_done_base_bytes + extracted;
             event.overall_total = opt_.overall_total_bytes;
             opt_.progress_sink->OnProgress(event);
-        } else if (opt_.progress && opt_.progress_interval_bytes > 0 && extracted >= next_progress) {
+        } else if (opt_.progress && opt_.progress_interval_bytes > 0 &&
+                   extracted >= next_progress) {
             LogInfo("[%.*s] extract progress: %llu bytes",
-                    (int)tag.size(), tag.data(), (unsigned long long)extracted);
+                    (int)tag.size(),
+                    tag.data(),
+                    (unsigned long long)extracted);
             next_progress = extracted + opt_.progress_interval_bytes;
         }
     };
@@ -95,12 +101,15 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
 
     while (true) {
         const int r = archive_read_next_header(ar.get(), &entry);
-        if (r == ARCHIVE_EOF) break;
-        if (r != ARCHIVE_OK) return Result::Fail(-1, "archive_read_next_header: " + ArchiveErr(ar.get()));
+        if (r == ARCHIVE_EOF)
+            break;
+        if (r != ARCHIVE_OK)
+            return Result::Fail(-1, "archive_read_next_header: " + ArchiveErr(ar.get()));
 
         std::string rel;
         auto path_res = path_policy.NormalizeEntryPath(archive_entry_pathname(entry), rel);
-        if (!path_res.is_ok()) return path_res;
+        if (!path_res.is_ok())
+            return path_res;
         if (rel.empty() || rel == ".") {
             (void)archive_read_data_skip(ar.get());
             continue;
@@ -111,7 +120,8 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
 
         std::string rel_hl;
         auto hl_res = path_policy.NormalizeHardlinkPath(archive_entry_hardlink(entry), rel_hl);
-        if (!hl_res.is_ok()) return hl_res;
+        if (!hl_res.is_ok())
+            return hl_res;
         if (!rel_hl.empty() && rel_hl != ".") {
             const std::string hardlink_target = (base_dir / fs::path(rel_hl)).string();
             archive_entry_set_hardlink(entry, hardlink_target.c_str());
@@ -120,7 +130,8 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
         LogDebug("[%.*s] entry: %s", (int)tag.size(), tag.data(), target_path.c_str());
 
         const int wh = archive_write_header(aw.get(), entry);
-        if (wh != ARCHIVE_OK) return Result::Fail(-1, "archive_write_header: " + ArchiveErr(aw.get()));
+        if (wh != ARCHIVE_OK)
+            return Result::Fail(-1, "archive_write_header: " + ArchiveErr(aw.get()));
 
         const void* buff = nullptr;
         size_t size = 0;
@@ -128,18 +139,22 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
 
         while (true) {
             const int rr = archive_read_data_block(ar.get(), &buff, &size, &offset);
-            if (rr == ARCHIVE_EOF) break;
-            if (rr != ARCHIVE_OK) return Result::Fail(-1, "archive_read_data_block: " + ArchiveErr(ar.get()));
+            if (rr == ARCHIVE_EOF)
+                break;
+            if (rr != ARCHIVE_OK)
+                return Result::Fail(-1, "archive_read_data_block: " + ArchiveErr(ar.get()));
 
             const int ww = archive_write_data_block(aw.get(), buff, size, offset);
-            if (ww != ARCHIVE_OK) return Result::Fail(-1, "archive_write_data_block: " + ArchiveErr(aw.get()));
+            if (ww != ARCHIVE_OK)
+                return Result::Fail(-1, "archive_write_data_block: " + ArchiveErr(aw.get()));
 
             extracted += static_cast<std::uint64_t>(size);
             emit_progress();
         }
 
         const int wf = archive_write_finish_entry(aw.get());
-        if (wf != ARCHIVE_OK) return Result::Fail(-1, "archive_write_finish_entry: " + ArchiveErr(aw.get()));
+        if (wf != ARCHIVE_OK)
+            return Result::Fail(-1, "archive_write_finish_entry: " + ArchiveErr(aw.get()));
     }
 
     if (opt_.progress_sink) {

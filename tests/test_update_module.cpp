@@ -1,18 +1,18 @@
-#include <gtest/gtest.h>
-#include <filesystem>
-#include <fstream>
-#include <string>
-#include <vector>
-
 #include "ota/update_module.hpp"
 #include "testing.hpp"
+
+#include <filesystem>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <string>
+#include <vector>
 
 namespace flash {
 
 class UpdateModuleTest : public ::testing::Test {
-protected:
+  protected:
     testutil::TemporaryDirectory temp_dir;
-    
+
     std::string GetTestPath(const std::string& filename) {
         return temp_dir.Path() + "/" + filename;
     }
@@ -33,7 +33,7 @@ TEST_F(UpdateModuleTest, ExecuteAtomicFile) {
 
     // Call the public entry point
     Result res = module.Execute(comp, std::move(reader));
-    
+
     ASSERT_TRUE(res.is_ok()) << "Execute failed: " << res.msg;
 
     // Verify file exists and matches
@@ -57,15 +57,14 @@ TEST_F(UpdateModuleTest, ExecuteGzippedRaw) {
     comp.filename = "image.gz";
     comp.install_to = partition_path;
 
-    std::vector<uint8_t> gz_data = {
-        0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 
-        0xcb, 0x48, 0xcd, 0xc9, 0xc9, 0x07, 0x00, 0x86, 0xa6, 0x10, 0x36, 0x05, 0x00, 0x00, 0x00
-    };
-    
+    std::vector<uint8_t> gz_data = {0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                    0x03, 0xcb, 0x48, 0xcd, 0xc9, 0xc9, 0x07, 0x00, 0x86,
+                                    0xa6, 0x10, 0x36, 0x05, 0x00, 0x00, 0x00};
+
     auto reader = std::make_unique<testutil::MemoryReader>(std::move(gz_data));
 
     Result res = module.Execute(comp, std::move(reader));
-    
+
     ASSERT_TRUE(res.is_ok()) << "Execute failed: " << res.msg;
 
     std::ifstream ifs(partition_path);

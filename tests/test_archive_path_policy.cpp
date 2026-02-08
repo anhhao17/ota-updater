@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "ota/archive_path_policy.hpp"
+
+#include <gtest/gtest.h>
 
 namespace flash {
 

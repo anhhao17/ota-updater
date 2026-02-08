@@ -1,9 +1,9 @@
 #define _FILE_OFFSET_BITS 64
 
-#include "util/logger.hpp"
 #include "ota/ota_installer.hpp"
 #include "ota/progress_sinks.hpp"
 #include "system/signals.hpp"
+#include "util/logger.hpp"
 
 #include <getopt.h>
 #include <string>
@@ -34,20 +34,20 @@ bool ParseCliOptions(int argc, char** argv, CliOptions& out) {
     int c;
     while ((c = getopt_long(argc, argv, "hi:p:v", long_opts, &idx)) != -1) {
         switch (c) {
-            case 'h':
-                out.show_help = true;
-                return true;
-            case 'i':
-                out.input_path = optarg;
-                break;
-            case 'p':
-                out.progress_file = optarg;
-                break;
-            case 'v':
-                out.verbose = true;
-                break;
-            default:
-                return false;
+        case 'h':
+            out.show_help = true;
+            return true;
+        case 'i':
+            out.input_path = optarg;
+            break;
+        case 'p':
+            out.progress_file = optarg;
+            break;
+        case 'v':
+            out.verbose = true;
+            break;
+        default:
+            return false;
         }
     }
 

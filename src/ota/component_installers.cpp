@@ -1,8 +1,8 @@
 #include "ota/component_installers.hpp"
 
+#include "io/partition_writer.hpp"
 #include "ota/archive_installer.hpp"
 #include "util/logger.hpp"
-#include "io/partition_writer.hpp"
 #include "util/path_utils.hpp"
 
 #include <cerrno>
@@ -32,8 +32,10 @@ void EmitProgress(const UpdateModule::Options& opt,
         opt.progress_sink->OnProgress(event);
     }
 
-    if (opt.progress_sink) return;
-    if (!opt.progress) return;
+    if (opt.progress_sink)
+        return;
+    if (!opt.progress)
+        return;
 
     if (opt.component_total_bytes > 0) {
         const int comp_pct = static_cast<int>((in_done * 100ULL) / opt.component_total_bytes);
@@ -83,11 +85,14 @@ Result PipeReaderToWriter(IReader& r,
 
     while (true) {
         const ssize_t n = r.Read(std::span<std::uint8_t>(buffer.data(), buffer.size()));
-        if (n == 0) break;
-        if (n < 0) return Result::Fail(errno, "Read failed during pipe");
+        if (n == 0)
+            break;
+        if (n < 0)
+            return Result::Fail(errno, "Read failed during pipe");
 
         auto res = w.WriteAll({buffer.data(), static_cast<size_t>(n)});
-        if (!res.is_ok()) return res;
+        if (!res.is_ok())
+            return res;
 
         written += static_cast<std::uint64_t>(n);
 
@@ -100,14 +105,16 @@ Result PipeReaderToWriter(IReader& r,
 
         if (opt.fsync_interval_bytes > 0 && written >= next_fsync) {
             auto fr = w.FsyncNow();
-            if (!fr.is_ok()) return fr;
+            if (!fr.is_ok())
+                return fr;
             LogDebug("[%s] fsync at out=%llu bytes", tag, (unsigned long long)written);
             next_fsync = written + opt.fsync_interval_bytes;
         }
     }
 
     auto fr = w.FsyncNow();
-    if (!fr.is_ok()) return fr;
+    if (!fr.is_ok())
+        return fr;
 
     EmitProgress(opt, tag, in_read ? *in_read : written, written, true);
     return Result::Ok();
@@ -136,20 +143,18 @@ std::string ResolveArchiveTarget(const Component& comp) {
 }
 
 class ProgressReader final : public IReader {
-public:
+  public:
     ProgressReader(IReader& inner,
                    const UpdateModule::Options& opt,
                    const char* tag,
                    const std::uint64_t* in_read)
-        : inner_(inner),
-          opt_(opt),
-          tag_(tag),
-          in_read_(in_read),
+        : inner_(inner), opt_(opt), tag_(tag), in_read_(in_read),
           next_progress_(opt.progress_interval_bytes) {}
 
     ssize_t Read(std::span<std::uint8_t> out) override {
         const ssize_t n = inner_.Read(out);
-        if (n <= 0) return n;
+        if (n <= 0)
+            return n;
 
         local_read_ += static_cast<std::uint64_t>(n);
         const std::uint64_t in_done = (in_read_ && *in_read_ > 0) ? *in_read_ : local_read_;
@@ -164,11 +169,9 @@ public:
         return n;
     }
 
-    std::optional<std::uint64_t> TotalSize() const override {
-        return inner_.TotalSize();
-    }
+    std::optional<std::uint64_t> TotalSize() const override { return inner_.TotalSize(); }
 
-private:
+  private:
     IReader& inner_;
     const UpdateModule::Options& opt_;
     const char* tag_ = nullptr;
@@ -178,10 +181,8 @@ private:
 };
 
 class RawInstallerStrategy final : public UpdateModule::IInstallerStrategy {
-public:
-    bool Supports(const Component& comp) const override {
-        return comp.type == "raw";
-    }
+  public:
+    bool Supports(const Component& comp) const override { return comp.type == "raw"; }
 
     Result Install(const Component& comp,
                    IReader& reader,
@@ -194,17 +195,16 @@ public:
 
         PartitionWriter writer;
         auto open_res = PartitionWriter::Open(comp.install_to, writer);
-        if (!open_res.is_ok()) return open_res;
+        if (!open_res.is_ok())
+            return open_res;
 
         return PipeReaderToWriter(reader, writer, opt, tag, in_read);
     }
 };
 
 class ArchiveInstallerStrategy final : public UpdateModule::IInstallerStrategy {
-public:
-    bool Supports(const Component& comp) const override {
-        return comp.type == "archive";
-    }
+  public:
+    bool Supports(const Component& comp) const override { return comp.type == "archive"; }
 
     Result Install(const Component& comp,
                    IReader& reader,
@@ -213,7 +213,8 @@ public:
                    const std::uint64_t* in_read) const override {
         std::string target = ResolveArchiveTarget(comp);
         if (target.empty()) {
-            return Result::Fail(-1, "archive component needs install_to(/dev/...) or path(folder): " + comp.name);
+            return Result::Fail(
+                -1, "archive component needs install_to(/dev/...) or path(folder): " + comp.name);
         }
 
         ArchiveInstaller::Options aopt;
@@ -231,10 +232,8 @@ public:
 };
 
 class AtomicFileInstallerStrategy final : public UpdateModule::IInstallerStrategy {
-public:
-    bool Supports(const Component& comp) const override {
-        return comp.type == "file";
-    }
+  public:
+    bool Supports(const Component& comp) const override { return comp.type == "file"; }
 
     Result Install(const Component& comp,
                    IReader& reader,
@@ -252,14 +251,15 @@ public:
         if (!parent.empty() && !fs::exists(parent)) {
             if (!comp.create_destination) {
                 return Result::Fail(ENOENT,
-                    "Destination directory does not exist: " + parent.string() +
-                    " (set 'create-destination': true in manifest)");
+                                    "Destination directory does not exist: " + parent.string() +
+                                        " (set 'create-destination': true in manifest)");
             }
 
             std::error_code ec;
             fs::create_directories(parent, ec);
             if (ec) {
-                return Result::Fail(-1, "create_directories failed: " + parent.string() + ": " + ec.message());
+                return Result::Fail(
+                    -1, "create_directories failed: " + parent.string() + ": " + ec.message());
             }
             LogInfo("Created destination directory: %s", parent.string().c_str());
         }
@@ -268,7 +268,8 @@ public:
 
         PartitionWriter writer;
         auto open_res = PartitionWriter::Open(tmp_path, writer);
-        if (!open_res.is_ok()) return open_res;
+        if (!open_res.is_ok())
+            return open_res;
 
         auto pipe_res = PipeReaderToWriter(reader, writer, opt, tag, in_read);
         if (!pipe_res.is_ok()) {

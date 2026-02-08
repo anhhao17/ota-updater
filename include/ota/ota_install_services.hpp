@@ -1,11 +1,11 @@
 #pragma once
 
 #include "io/file_reader.hpp"
-#include "util/manifest.hpp"
 #include "ota/ota_bundle_reader.hpp"
 #include "ota/progress.hpp"
-#include "util/result.hpp"
 #include "ota/update_module.hpp"
+#include "util/manifest.hpp"
+#include "util/result.hpp"
 
 #include <cstdint>
 #include <string>
@@ -15,36 +15,36 @@
 namespace flash {
 
 class ComponentIndex {
-public:
+  public:
     explicit ComponentIndex(const Manifest& manifest);
 
     const Component* Find(std::string_view normalized_entry_name) const;
     bool Contains(std::string_view normalized_entry_name) const;
 
-private:
+  private:
     std::unordered_map<std::string, const Component*> by_filename_;
 };
 
 class ManifestLoader {
-public:
+  public:
     static Result LoadFromFirstBundleEntry(OtaTarBundleReader& bundle, Manifest& out_manifest);
 };
 
 class BundlePreScanner {
-public:
+  public:
     static std::uint64_t ComputeOverallTotalFromFile(const std::string& input_path,
                                                      const ComponentIndex& component_index);
 };
 
 class InstallCoordinator {
-public:
+  public:
     explicit InstallCoordinator(UpdateModule& update_module, IProgress* progress_sink = nullptr);
 
     Result InstallMatchingEntries(OtaTarBundleReader& bundle,
                                   const ComponentIndex& component_index,
                                   std::uint64_t overall_total);
 
-private:
+  private:
     static UpdateModule::Options BuildOptions(std::uint64_t component_total_bytes,
                                               std::uint64_t overall_total_bytes,
                                               std::uint64_t overall_done_base_bytes,

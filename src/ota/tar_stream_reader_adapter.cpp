@@ -25,8 +25,10 @@ la_ssize_t ReadCb(struct archive*, void* client_data, const void** out_buf) {
     }
 
     auto* ctx = static_cast<ReaderCtx*>(client_data);
-    const ssize_t n = ctx->reader->Read(std::span<std::uint8_t>(ctx->buffer.data(), ctx->buffer.size()));
-    if (n < 0) return -1;
+    const ssize_t n =
+        ctx->reader->Read(std::span<std::uint8_t>(ctx->buffer.data(), ctx->buffer.size()));
+    if (n < 0)
+        return -1;
 
     *out_buf = ctx->buffer.data();
     return static_cast<la_ssize_t>(n);
