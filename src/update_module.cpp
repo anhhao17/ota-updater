@@ -1,9 +1,11 @@
 #include "flash/update_module.hpp"
 
+#include "flash/archive_installer.hpp"
+#include "flash/counting_reader.hpp"
 #include "flash/gzip_reader.hpp"
 #include "flash/logger.hpp"
 #include "flash/partition_writer.hpp"
-#include "flash/archive_installer.hpp"
+#include "flash/path_utils.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -20,30 +22,7 @@ static bool EndsWithGz(const std::string& s) {
     return s.size() >= 3 && s.compare(s.size() - 3, 3, ".gz") == 0;
 }
 
-static bool IsDevPath(std::string_view s) {
-    return s.rfind("/dev/", 0) == 0;
-}
-
 // Counts bytes read from the *bundle entry stream* (compressed bytes if the entry is .gz).
-class CountingReader final : public IReader {
-public:
-    CountingReader(std::unique_ptr<IReader> inner, std::uint64_t* counter)
-        : inner_(std::move(inner)), counter_(counter) {}
-
-    ssize_t Read(std::span<std::uint8_t> out) override {
-        const ssize_t n = inner_->Read(out);
-        if (n > 0 && counter_) *counter_ += static_cast<std::uint64_t>(n);
-        return n;
-    }
-
-    std::optional<std::uint64_t> TotalSize() const override {
-        return inner_ ? inner_->TotalSize() : std::nullopt;
-    }
-
-private:
-    std::unique_ptr<IReader> inner_;
-    std::uint64_t* counter_ = nullptr;
-};
 
 static void EmitProgress(const UpdateModule::Options& opt,
                          const char* tag,
@@ -202,7 +181,12 @@ Result UpdateModule::InstallAtomicFile(const Component& comp, IReader& reader, c
     }
 
     if (!comp.permissions.empty()) {
-        mode_t mode = static_cast<mode_t>(std::stoul(comp.permissions, nullptr, 8));
+        mode_t mode = 0;
+        try {
+            mode = static_cast<mode_t>(std::stoul(comp.permissions, nullptr, 8));
+        } catch (const std::exception&) {
+            return Result::Fail(-1, "Invalid permissions value: " + comp.permissions);
+        }
         if (::chmod(comp.path.c_str(), mode) != 0) {
             const int err = errno;
             return Result::Fail(err, "chmod failed: " + std::string(std::strerror(err)));

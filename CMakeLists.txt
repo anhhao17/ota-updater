@@ -30,6 +30,8 @@ add_library(flash_core
   src/logger.cpp
   src/ota_installer.cpp
   src/archive_installer.cpp
+  src/mount_session.cpp
+  src/tar_stream_extractor.cpp
 )
 
 target_include_directories(flash_core PUBLIC include)

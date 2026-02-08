@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
+#include <filesystem>
 #include <fstream>
+#include <string>
 #include <vector>
+
 #include "flash/update_module.hpp"
 #include "testing.hpp"
 
@@ -84,6 +87,84 @@ TEST_F(UpdateModuleTest, ExecuteGzippedRaw) {
     std::string actual;
     ifs >> actual;
     EXPECT_EQ(actual, "hello");
+}
+
+TEST_F(UpdateModuleTest, ExecuteAtomicFile_MissingDirectoryWithoutCreateDestination_Fails) {
+    Component comp;
+    comp.name = "cfg";
+    comp.type = "file";
+    comp.path = GetTestPath("missing/dir/config.txt");
+    comp.create_destination = false;
+
+    auto reader = std::make_unique<MemoryReader>("hello");
+    Result res = UpdateModule::Execute(comp, std::move(reader));
+    ASSERT_FALSE(res.is_ok());
+    EXPECT_NE(res.msg.find("Destination directory does not exist"), std::string::npos);
+}
+
+TEST_F(UpdateModuleTest, ExecuteAtomicFile_CreateDestination_Succeeds) {
+    Component comp;
+    comp.name = "cfg";
+    comp.type = "file";
+    comp.path = GetTestPath("new/dir/config.txt");
+    comp.create_destination = true;
+    comp.permissions = "0640";
+
+    auto reader = std::make_unique<MemoryReader>("key=value");
+    Result res = UpdateModule::Execute(comp, std::move(reader));
+    ASSERT_TRUE(res.is_ok()) << res.msg;
+
+    namespace fs = std::filesystem;
+    EXPECT_TRUE(fs::exists(fs::path(comp.path).parent_path()));
+    EXPECT_TRUE(fs::exists(comp.path));
+}
+
+TEST_F(UpdateModuleTest, ExecuteAtomicFile_InvalidPermissions_Fails) {
+    Component comp;
+    comp.name = "cfg";
+    comp.type = "file";
+    comp.path = GetTestPath("config.txt");
+    comp.permissions = "invalid";
+
+    auto reader = std::make_unique<MemoryReader>("content");
+    Result res = UpdateModule::Execute(comp, std::move(reader));
+    ASSERT_FALSE(res.is_ok());
+    EXPECT_NE(res.msg.find("Invalid permissions value"), std::string::npos);
+}
+
+TEST_F(UpdateModuleTest, ExecuteUnsupportedType_Fails) {
+    Component comp;
+    comp.name = "x";
+    comp.type = "unknown";
+
+    auto reader = std::make_unique<MemoryReader>("content");
+    Result res = UpdateModule::Execute(comp, std::move(reader));
+    ASSERT_FALSE(res.is_ok());
+    EXPECT_NE(res.msg.find("Unsupported component type"), std::string::npos);
+}
+
+TEST_F(UpdateModuleTest, ExecuteRawWithoutTarget_Fails) {
+    Component comp;
+    comp.name = "kernel";
+    comp.type = "raw";
+    comp.install_to.clear();
+
+    auto reader = std::make_unique<MemoryReader>("payload");
+    Result res = UpdateModule::Execute(comp, std::move(reader));
+    ASSERT_FALSE(res.is_ok());
+    EXPECT_NE(res.msg.find("install_to empty"), std::string::npos);
+}
+
+TEST_F(UpdateModuleTest, ExecuteNullSourceReader_Fails) {
+    Component comp;
+    comp.name = "cfg";
+    comp.type = "file";
+    comp.path = GetTestPath("config.txt");
+
+    std::unique_ptr<IReader> null_reader;
+    Result res = UpdateModule::Execute(comp, std::move(null_reader));
+    ASSERT_FALSE(res.is_ok());
+    EXPECT_NE(res.msg.find("Null source reader"), std::string::npos);
 }
 
 } // namespace flash

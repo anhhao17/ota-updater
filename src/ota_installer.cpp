@@ -4,28 +4,31 @@
 #include "flash/logger.hpp"
 #include "flash/manifest.hpp"
 #include "flash/ota_bundle_reader.hpp"
+#include "flash/path_utils.hpp"
 #include "flash/update_module.hpp"
 
 #include <memory>
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 
 namespace flash {
 
-std::string NormalizeTarName(std::string s) {
-    if (s.rfind("./", 0) == 0) s.erase(0, 2);
-    return s;
+static std::unordered_map<std::string, const Component*>
+IndexComponentsByFilename(const Manifest& manifest) {
+    std::unordered_map<std::string, const Component*> out;
+    out.reserve(manifest.components.size());
+    for (const auto& c : manifest.components) {
+        if (!c.filename.empty()) {
+            out.emplace(c.filename, &c);
+        }
+    }
+    return out;
 }
 
-static std::uint64_t ComputeOverallTotalFromFile(const std::string& input_path,
-                                                 const Manifest& manifest) {
+static std::uint64_t ComputeOverallTotalFromFile(
+    const std::string& input_path,
+    const std::unordered_map<std::string, const Component*>& by_filename) {
     if (input_path == "-") return 0;
-
-    std::unordered_set<std::string> want;
-    want.reserve(manifest.components.size());
-    for (const auto& c : manifest.components) {
-        if (!c.filename.empty()) want.insert(c.filename);
-    }
 
     FileOrStdinReader input2;
     auto r = FileOrStdinReader::Open(input_path.c_str(), input2);
@@ -54,8 +57,8 @@ static std::uint64_t ComputeOverallTotalFromFile(const std::string& input_path,
         if (!rr.is_ok()) return 0;
         if (eof) break;
 
-        const std::string name = NormalizeTarName(ent.name);
-        if (want.find(name) != want.end()) {
+        const std::string name = NormalizeTarPath(ent.name);
+        if (by_filename.find(name) != by_filename.end()) {
             total += ent.size;
         }
 
@@ -64,13 +67,6 @@ static std::uint64_t ComputeOverallTotalFromFile(const std::string& input_path,
     }
 
     return total;
-}
-
-static const Component* FindComponentByFilename(const Manifest& m, const std::string& filename) {
-    for (const auto& c : m.components) {
-        if (c.filename == filename) return &c;
-    }
-    return nullptr;
 }
 
 Result OtaInstaller::Run(const std::string& input_path) {
@@ -98,7 +94,7 @@ Result OtaInstaller::Run(const std::string& input_path) {
         if (!r.is_ok()) return r;
         if (eof) return Result::Fail(-1, "Empty ota.tar");
 
-        const std::string name = NormalizeTarName(ent.name);
+        const std::string name = NormalizeTarPath(ent.name);
         if (name != "manifest.json") {
             return Result::Fail(-1, "manifest.json must be the first entry in ota.tar (got: " + name + ")");
         }
@@ -117,8 +113,10 @@ Result OtaInstaller::Run(const std::string& input_path) {
                 manifest.components.size());
     }
 
+    const auto by_filename = IndexComponentsByFilename(manifest);
+
     // Pre-scan overall total (only if input is a file path)
-    const std::uint64_t overall_total = ComputeOverallTotalFromFile(input_path, manifest);
+    const std::uint64_t overall_total = ComputeOverallTotalFromFile(input_path, by_filename);
     if (overall_total > 0) {
         LogInfo("OTA overall total (bundle bytes) = %llu", (unsigned long long)overall_total);
     } else {
@@ -135,9 +133,12 @@ Result OtaInstaller::Run(const std::string& input_path) {
         if (!r.is_ok()) return r;
         if (eof) break;
 
-        const std::string name = NormalizeTarName(ent.name);
+        const std::string name = NormalizeTarPath(ent.name);
 
-        const Component* comp = FindComponentByFilename(manifest, name);
+        const Component* comp = nullptr;
+        if (auto it = by_filename.find(name); it != by_filename.end()) {
+            comp = it->second;
+        }
         if (!comp) {
             LogDebug("skip: %s", name.c_str());
             auto sk = bundle.SkipCurrent();

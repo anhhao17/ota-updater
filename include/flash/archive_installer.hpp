@@ -32,8 +32,6 @@ public:
 
 private:
     Options opt_{};
-
-    Result ExtractTarStreamToDir(IReader& tar_stream, const std::string& dst_dir, std::string_view tag);
 };
 
 } // namespace flash

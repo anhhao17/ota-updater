@@ -4,6 +4,7 @@ add_executable(flash_tool_tests
   test_fd.cpp
   test_manifest.cpp
   test_gzip_reader.cpp
+  test_path_utils.cpp
   test_update_module.cpp
 )
 

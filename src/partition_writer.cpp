@@ -1,6 +1,7 @@
 // partition_writer.cpp - Writer implementation for block device/partition path.
 
 #include "flash/partition_writer.hpp"
+#include "flash/path_utils.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -14,7 +15,11 @@ Result PartitionWriter::Open(std::string path, PartitionWriter &out) {
     out.path_ = std::move(path);
 
     // O_WRONLY is enough for MVP; later you can add O_SYNC / O_DIRECT options.
-    int fd = ::open(out.path_.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int flags = O_WRONLY;
+    if (!IsDevPath(out.path_)) {
+        flags |= O_CREAT | O_TRUNC;
+    }
+    int fd = ::open(out.path_.c_str(), flags, 0644);
     if (fd < 0) {
         return Result::Fail(
             errno,
