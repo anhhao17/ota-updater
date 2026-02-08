@@ -1,8 +1,14 @@
 #include "flash/ota_installer.hpp"
 
+#include "flash/device_config.hpp"
 #include "flash/file_reader.hpp"
 #include "flash/logger.hpp"
+#include "flash/manifest_selector.hpp"
 #include "flash/ota_install_services.hpp"
+
+namespace {
+constexpr const char kConfFile[] = "/run/ota-updater/ota.conf";
+} // namespace
 
 namespace flash {
 
@@ -23,6 +29,20 @@ Result OtaInstaller::Run(const std::string& input_path) {
     Manifest manifest{};
     auto manifest_result = ManifestLoader::LoadFromFirstBundleEntry(bundle, manifest);
     if (!manifest_result.is_ok()) return manifest_result;
+
+    DeviceConfig device_cfg;
+    auto cfg_res = DeviceConfig::LoadFromFile(kConfFile, device_cfg);
+    if (!cfg_res.is_ok()) return cfg_res;
+
+    Manifest selected{};
+    auto sel_res = ManifestSelector::SelectForDevice(manifest, device_cfg, selected);
+    if (!sel_res.is_ok()) return sel_res;
+    manifest = std::move(selected);
+
+    LogInfo("Device config: slot=%s hw=%s",
+            device_cfg.current_slot.c_str(),
+            device_cfg.hw_compatibility.c_str());
+    LogInfo("Selected components: %zu", manifest.components.size());
 
     const ComponentIndex component_index(manifest);
 

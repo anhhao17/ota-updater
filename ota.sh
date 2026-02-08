@@ -55,43 +55,84 @@ cat > manifest.json <<EOF
 {
   "version": "1.0.1",
   "hw_compatibility": "jetson-orin-nano-devkit-nvme",
-  "components": [
-    {
-      "name": "rootfs",
-      "type": "archive",
-      "filename": "core-image-full-cmdline.tar.gz",
-      "install_to": "inactive_app_partition",
-      "size": $SIZE_ROOTFS,
-      "sha256": "$SHA_ROOTFS"
-    },
-    {
-      "name": "kernel",
-      "type": "raw",
-      "filename": "tegra-minimal-initramfs.cboot",
-      "install_to": "inactive_kernel_partition",
-      "size": $SIZE_KERNEL,
-      "sha256": "$SHA_KERNEL"
-    },
-    {
-      "name": "bootloader",
-      "type": "file",
-      "create-destination": true,
-      "filename": "tegra-bl.cap",
-      "path": "/tmp/ota_test/TEGRA_BL.Cap",
-      "size": $SIZE_BL,
-      "sha256": "$SHA_BL",
-      "version": "36.4.4"
-    },
-    {
-      "name": "wifi-config",
-      "type": "file",
-      "filename": "wpa_supplicant.conf",
-      "path": "/tmp/ota_test/wpa_supplicant.conf",
-      "permissions": "0600",
-      "size": $SIZE_WIFI,
-      "sha256": "$SHA_WIFI"
-    }
-  ]
+  "slot-a": {
+    "components": [
+      {
+        "name": "rootfs",
+        "type": "archive",
+        "filename": "core-image-full-cmdline.tar.gz",
+        "install_to": "inactive-root-b",
+        "size": $SIZE_ROOTFS,
+        "sha256": "$SHA_ROOTFS"
+      },
+      {
+        "name": "kernel",
+        "type": "raw",
+        "filename": "tegra-minimal-initramfs.cboot",
+        "install_to": "inactive-kernel-b",
+        "size": $SIZE_KERNEL,
+        "sha256": "$SHA_KERNEL"
+      },
+      {
+        "name": "bootloader",
+        "type": "file",
+        "create-destination": true,
+        "filename": "tegra-bl.cap",
+        "path": "/tmp/ota_test/TEGRA_BL.Cap",
+        "size": $SIZE_BL,
+        "sha256": "$SHA_BL",
+        "version": "36.4.4"
+      },
+      {
+        "name": "wifi-config",
+        "type": "file",
+        "filename": "wpa_supplicant.conf",
+        "path": "/tmp/ota_test/wpa_supplicant.conf",
+        "permissions": "0600",
+        "size": $SIZE_WIFI,
+        "sha256": "$SHA_WIFI"
+      }
+    ]
+  },
+  "slot-b": {
+    "components": [
+      {
+        "name": "rootfs",
+        "type": "archive",
+        "filename": "core-image-full-cmdline.tar.gz",
+        "install_to": "inactive-root-a",
+        "size": $SIZE_ROOTFS,
+        "sha256": "$SHA_ROOTFS"
+      },
+      {
+        "name": "kernel",
+        "type": "raw",
+        "filename": "tegra-minimal-initramfs.cboot",
+        "install_to": "inactive-kernel-a",
+        "size": $SIZE_KERNEL,
+        "sha256": "$SHA_KERNEL"
+      },
+      {
+        "name": "bootloader",
+        "type": "file",
+        "create-destination": true,
+        "filename": "tegra-bl.cap",
+        "path": "/tmp/ota_test/TEGRA_BL.Cap",
+        "size": $SIZE_BL,
+        "sha256": "$SHA_BL",
+        "version": "36.4.4"
+      },
+      {
+        "name": "wifi-config",
+        "type": "file",
+        "filename": "wpa_supplicant.conf",
+        "path": "/tmp/ota_test/wpa_supplicant.conf",
+        "permissions": "0600",
+        "size": $SIZE_WIFI,
+        "sha256": "$SHA_WIFI"
+      }
+    ]
+  }
 }
 EOF
 

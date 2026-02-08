@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <expected>
 
@@ -27,6 +28,7 @@ struct Manifest {
     std::string hw_compatibility;
     bool force_all = false;
     std::vector<Component> components;
+    std::unordered_map<std::string, std::vector<Component>> slot_components;
 };
 
 class ManifestHandler {

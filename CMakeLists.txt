@@ -18,8 +18,10 @@ add_library(flash_core
   src/signals.cpp
   src/config_parser.cpp
   src/config_json_utils.cpp
+  src/device_config.cpp
   src/manifest.cpp
   src/manifest_parser.cpp
+  src/manifest_selector.cpp
   src/version_comparator.cpp
   src/update_policy.cpp
   src/gzip_reader.cpp
