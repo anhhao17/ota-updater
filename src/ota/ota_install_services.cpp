@@ -72,7 +72,7 @@ std::uint64_t BundlePreScanner::ComputeOverallTotalFromFile(const std::string& i
         return 0;
 
     FileOrStdinReader input;
-    auto open_result = FileOrStdinReader::Open(input_path.c_str(), input);
+    auto open_result = FileOrStdinReader::Open(input_path, input);
     if (!open_result.ok) {
         LogWarn("Pre-scan open failed, overall progress disabled: %s", open_result.msg.c_str());
         return 0;

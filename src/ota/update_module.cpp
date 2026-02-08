@@ -5,6 +5,7 @@
 #include "ota/component_installers.hpp"
 #include "util/logger.hpp"
 
+#include <algorithm>
 #include <utility>
 
 namespace flash {
@@ -48,10 +49,11 @@ Result UpdateModule::ExecuteComponent(const Component& comp,
         }
     }
 
-    for (const auto& strategy : strategies_) {
-        if (strategy->Supports(comp)) {
-            return strategy->Install(comp, *effective_reader, opt, tag, &in_read);
-        }
+    const auto it = std::find_if(strategies_.begin(), strategies_.end(), [&](const auto& strategy) {
+        return strategy->Supports(comp);
+    });
+    if (it != strategies_.end()) {
+        return (*it)->Install(comp, *effective_reader, opt, tag, &in_read);
     }
 
     return Result::Fail(-1, "Unsupported component type: " + comp.type);

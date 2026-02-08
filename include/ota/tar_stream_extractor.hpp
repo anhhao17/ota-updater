@@ -24,7 +24,7 @@ class TarStreamExtractor {
     };
 
     TarStreamExtractor() = default;
-    explicit TarStreamExtractor(Options opt) : opt_(opt) {}
+    explicit TarStreamExtractor(const Options& opt) : opt_(opt) {}
 
     Result
     ExtractToDir(IReader& tar_stream, const std::string& dst_dir, std::string_view tag) const;

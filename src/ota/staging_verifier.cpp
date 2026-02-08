@@ -5,6 +5,7 @@
 
 #include <cctype>
 #include <cerrno>
+#include <algorithm>
 #include <fcntl.h>
 #include <string>
 #include <unistd.h>
@@ -15,9 +16,9 @@ namespace flash {
 namespace {
 
 std::string NormalizeHex(std::string s) {
-    for (char& c : s) {
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    }
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
     return s;
 }
 

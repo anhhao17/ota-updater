@@ -10,7 +10,7 @@ struct Result {
     std::string msg;
 
     bool is_ok() const { return ok; }
-    std::string message() const { return msg; }
+    const std::string& message() const { return msg; }
 
     static Result Ok() { return {}; }
     static Result Fail(int e, std::string m) {

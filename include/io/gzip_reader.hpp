@@ -15,7 +15,6 @@ class GzipReader final : public IReader {
 
     // Implementation of IReader
     ssize_t Read(std::span<std::uint8_t> out) override;
-    std::optional<std::uint64_t> TotalSize() const override { return std::nullopt; }
 
   private:
     std::unique_ptr<IReader> source_;

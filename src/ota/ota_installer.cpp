@@ -18,7 +18,7 @@ OtaInstaller::OtaInstaller(UpdateModule update_module) : update_module_(std::mov
 
 Result OtaInstaller::Run(const std::string& input_path) {
     FileOrStdinReader input;
-    auto open_result = FileOrStdinReader::Open(input_path.c_str(), input);
+    auto open_result = FileOrStdinReader::Open(input_path, input);
     if (!open_result.ok)
         return Result::Fail(-1, open_result.msg);
 
