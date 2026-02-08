@@ -2,6 +2,7 @@
 #include "flash/progress_sinks.hpp"
 
 #include <cstdio>
+#include <ctime>
 #include <mutex>
 
 namespace flash {
@@ -18,6 +19,17 @@ const char* ToStr(LogLevel lvl) {
         case LogLevel::Error: return "ERROR";
         default:              return "LOG";
     }
+}
+
+void FormatTimestamp(char* buf, size_t buf_len) {
+    if (buf_len == 0) return;
+    const std::time_t now = std::time(nullptr);
+    std::tm tm{};
+    if (localtime_r(&now, &tm) == nullptr) {
+        buf[0] = '\0';
+        return;
+    }
+    std::strftime(buf, buf_len, "%Y-%m-%d %H:%M:%S", &tm);
 }
 } // namespace
 
@@ -57,7 +69,13 @@ void Logger::VLog(LogLevel lvl, const char* fmt, va_list ap) {
     if (IsProgressLineActive()) {
         ClearProgressLine();
     }
-    std::fprintf(stderr, "[%s] ", ToStr(lvl));
+    char ts[32]{};
+    FormatTimestamp(ts, sizeof(ts));
+    if (ts[0] != '\0') {
+        std::fprintf(stderr, "[%s] [%s] ", ts, ToStr(lvl));
+    } else {
+        std::fprintf(stderr, "[%s] ", ToStr(lvl));
+    }
     std::vfprintf(stderr, fmt, ap);
     std::fprintf(stderr, "\n");
 }
