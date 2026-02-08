@@ -23,14 +23,24 @@ add_library(flash_core
   src/flasher.cpp
   src/signals.cpp
   src/config_parser.cpp
+  src/config_json_utils.cpp
   src/manifest.cpp
+  src/manifest_parser.cpp
+  src/version_comparator.cpp
+  src/update_policy.cpp
   src/gzip_reader.cpp
+  src/flasher_engine.cpp
   src/update_module.cpp
+  src/component_installers.cpp
   src/ota_bundle_reader.cpp
   src/logger.cpp
   src/ota_installer.cpp
+  src/ota_install_services.cpp
   src/archive_installer.cpp
+  src/progress_sinks.cpp
+  src/archive_path_policy.cpp
   src/mount_session.cpp
+  src/tar_stream_reader_adapter.cpp
   src/tar_stream_extractor.cpp
 )
 

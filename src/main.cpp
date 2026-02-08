@@ -2,24 +2,29 @@
 
 #include "flash/logger.hpp"
 #include "flash/ota_installer.hpp"
+#include "flash/progress_sinks.hpp"
 #include "flash/signals.hpp"
 
 #include <getopt.h>
+#include <string>
 
 namespace {
+
+struct CliOptions {
+    std::string input_path;
+    std::string progress_file;
+    bool verbose = false;
+    bool show_help = false;
+};
+
 void PrintUsage(const char* argv0) {
-    flash::LogError("Usage: %s -i <ota.tar | -> [-v]", argv0);
+    flash::LogError("Usage: %s -i <ota.tar | -> [-v] [--progress-file <path>]", argv0);
 }
-} // namespace
 
-int main(int argc, char** argv) {
-    flash::InstallSignalHandlers();
-    flash::Logger::Instance().SetLevel(flash::LogLevel::Info);
-
-    const char* in = nullptr;
-
+bool ParseCliOptions(int argc, char** argv, CliOptions& out) {
     static option long_opts[] = {
         {"input", required_argument, nullptr, 'i'},
+        {"progress-file", required_argument, nullptr, 'p'},
         {"verbose", no_argument, nullptr, 'v'},
         {"help", no_argument, nullptr, 'h'},
         {nullptr, 0, nullptr, 0},
@@ -27,19 +32,53 @@ int main(int argc, char** argv) {
 
     int idx = 0;
     int c;
-    while ((c = getopt_long(argc, argv, "hi:v", long_opts, &idx)) != -1) {
+    while ((c = getopt_long(argc, argv, "hi:p:v", long_opts, &idx)) != -1) {
         switch (c) {
-            case 'h': PrintUsage(argv[0]); return 0;
-            case 'i': in = optarg; break;
-            case 'v': flash::Logger::Instance().SetLevel(flash::LogLevel::Debug); break;
-            default:  PrintUsage(argv[0]); return 2;
+            case 'h':
+                out.show_help = true;
+                return true;
+            case 'i':
+                out.input_path = optarg;
+                break;
+            case 'p':
+                out.progress_file = optarg;
+                break;
+            case 'v':
+                out.verbose = true;
+                break;
+            default:
+                return false;
         }
     }
 
-    if (!in) { PrintUsage(argv[0]); return 2; }
+    return !out.input_path.empty();
+}
+} // namespace
+
+int main(int argc, char** argv) {
+    flash::InstallSignalHandlers();
+    flash::Logger::Instance().SetLevel(flash::LogLevel::Info);
+
+    CliOptions options;
+    if (!ParseCliOptions(argc, argv, options)) {
+        PrintUsage(argv[0]);
+        return 2;
+    }
+    if (options.show_help) {
+        PrintUsage(argv[0]);
+        return 0;
+    }
+    if (options.verbose) {
+        flash::Logger::Instance().SetLevel(flash::LogLevel::Debug);
+    }
 
     flash::OtaInstaller installer;
-    auto r = installer.Run(in);
+    std::unique_ptr<flash::IProgress> progress_sink;
+    if (!options.progress_file.empty()) {
+        progress_sink = std::make_unique<flash::FileProgressSink>(options.progress_file);
+        installer.SetProgressSink(progress_sink.get());
+    }
+    auto r = installer.Run(options.input_path);
     if (!r.is_ok()) {
         flash::LogError("%s", r.message().c_str());
         return 1;

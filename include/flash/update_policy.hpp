@@ -1,0 +1,16 @@
+#pragma once
+
+#include "flash/manifest.hpp"
+
+#include <string>
+
+namespace flash {
+
+class UpdatePolicy {
+public:
+    static bool ShouldUpdate(const Component& comp,
+                             const Manifest& manifest,
+                             const std::string& current_version);
+};
+
+} // namespace flash
