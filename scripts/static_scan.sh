@@ -31,13 +31,27 @@ run_cppcheck() {
     return 0
   fi
 
-  echo "[scan] Running cppcheck..."
+  echo "[scan] Running cppcheck on production code (src/include)..."
   cppcheck \
     --enable=warning,style,performance,portability \
     --std=c++23 \
     --suppress=missingIncludeSystem \
     -I include \
-    src tests
+    src include
+
+  if [[ "${RUN_CPPCHECK_TESTS:-0}" == "1" ]]; then
+    echo "[scan] Running cppcheck on tests (may require extra suppressions for gtest macros)..."
+    cppcheck \
+      --enable=warning,style,performance,portability \
+      --std=c++23 \
+      --suppress=missingIncludeSystem \
+      --suppress=syntaxError:tests/* \
+      -I include \
+      tests
+  else
+    echo "[scan] Skipping tests for cppcheck by default (GoogleTest macros trigger parser noise)."
+    echo "[scan] Set RUN_CPPCHECK_TESTS=1 to include tests."
+  fi
 }
 
 run_clang_tidy
