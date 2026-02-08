@@ -14,7 +14,6 @@ add_library(flash_core
   src/fd.cpp
   src/file_reader.cpp
   src/partition_writer.cpp
-  src/flasher.cpp
   src/signals.cpp
   src/config_parser.cpp
   src/config_json_utils.cpp
@@ -23,7 +22,6 @@ add_library(flash_core
   src/version_comparator.cpp
   src/update_policy.cpp
   src/gzip_reader.cpp
-  src/flasher_engine.cpp
   src/update_module.cpp
   src/component_installers.cpp
   src/ota_bundle_reader.cpp
