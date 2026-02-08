@@ -61,7 +61,7 @@ cat > manifest.json <<EOF
         "name": "rootfs",
         "type": "archive",
         "filename": "core-image-full-cmdline.tar.gz",
-        "install_to": "inactive-root-b",
+        "install_to": "/tmp/inactive-root-b",
         "size": $SIZE_ROOTFS,
         "sha256": "$SHA_ROOTFS"
       },
@@ -69,7 +69,7 @@ cat > manifest.json <<EOF
         "name": "kernel",
         "type": "raw",
         "filename": "tegra-minimal-initramfs.cboot",
-        "install_to": "inactive-kernel-b",
+        "install_to": "/tmp/inactive-kernel-b",
         "size": $SIZE_KERNEL,
         "sha256": "$SHA_KERNEL"
       },
@@ -100,7 +100,7 @@ cat > manifest.json <<EOF
         "name": "rootfs",
         "type": "archive",
         "filename": "core-image-full-cmdline.tar.gz",
-        "install_to": "inactive-root-a",
+        "install_to": "/tmp/inactive-root-a",
         "size": $SIZE_ROOTFS,
         "sha256": "$SHA_ROOTFS"
       },
@@ -108,7 +108,7 @@ cat > manifest.json <<EOF
         "name": "kernel",
         "type": "raw",
         "filename": "tegra-minimal-initramfs.cboot",
-        "install_to": "inactive-kernel-a",
+        "install_to": "/tmp/inactive-kernel-a",
         "size": $SIZE_KERNEL,
         "sha256": "$SHA_KERNEL"
       },

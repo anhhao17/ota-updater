@@ -50,3 +50,10 @@ cmake -S . -B "$HOST_TEST_BUILD_DIR" \
 
 cmake --build "$HOST_TEST_BUILD_DIR" -j
 ctest --test-dir "$HOST_TEST_BUILD_DIR" --output-on-failure
+
+# test on device
+./ota.sh
+
+${HOST_TEST_BUILD_DIR}/flash_tool -i ota_sample/ota.tar
+# clean up
+rm -rf ./ota_sample
