@@ -6,6 +6,8 @@
 #include "flash/tar_stream_extractor.hpp"
 
 #include <filesystem>
+#include <span>
+#include <vector>
 #include <sys/mount.h>
 
 namespace fs = std::filesystem;
@@ -35,6 +37,16 @@ Result ArchiveInstaller::InstallTarStreamToTarget(IReader& tar_stream,
     xopt.overall_done_base_bytes = opt_.overall_done_base_bytes;
     TarStreamExtractor extractor(xopt);
 
+    auto drain_stream = [&]() -> Result {
+        std::vector<std::uint8_t> drain_buf(64 * 1024);
+        while (true) {
+            const ssize_t n = tar_stream.Read(std::span<std::uint8_t>(drain_buf.data(), drain_buf.size()));
+            if (n == 0) break;
+            if (n < 0) return Result::Fail(-1, "archive stream drain failed");
+        }
+        return Result::Ok();
+    };
+
     if (IsDevPath(install_to)) {
         MountSession session;
         LogInfo("[%.*s] mount %.*s", (int)tag.size(), tag.data(), (int)install_to.size(), install_to.data());
@@ -51,6 +63,9 @@ Result ArchiveInstaller::InstallTarStreamToTarget(IReader& tar_stream,
 
         auto r = extractor.ExtractToDir(tar_stream, session.Dir(), tag);
         if (!r.is_ok()) return r;
+
+        auto dr = drain_stream();
+        if (!dr.is_ok()) return dr;
 
         auto ur = session.Unmount();
         if (!ur.is_ok()) return ur;
@@ -69,6 +84,9 @@ Result ArchiveInstaller::InstallTarStreamToTarget(IReader& tar_stream,
     LogInfo("[%.*s] extract -> %s", (int)tag.size(), tag.data(), dst.string().c_str());
     auto r = extractor.ExtractToDir(tar_stream, dst.string(), tag);
     if (!r.is_ok()) return r;
+
+    auto dr = drain_stream();
+    if (!dr.is_ok()) return dr;
 
     LogInfo("[%.*s] archive install done", (int)tag.size(), tag.data());
     return Result::Ok();

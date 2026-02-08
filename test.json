@@ -7,7 +7,7 @@
       "type": "archive",
       "filename": "core-image-full-cmdline.tar.gz",
       "install_to": "inactive_app_partition",
-      "size": 1073741881,
+      "size": 1073741881, // size of actual rootfs
       "sha256": "78d93070ea8b45a44fbd3d68df6ca356d8bd219a9b2ccf8616a259d6676011ee"
     },
     {

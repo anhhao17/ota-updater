@@ -21,6 +21,7 @@ private:
     z_stream strm_{};
     std::vector<std::uint8_t> in_buffer_;
     bool eof_reached_ = false;
+    bool drained_source_ = false;
 };
 
 } // namespace flash

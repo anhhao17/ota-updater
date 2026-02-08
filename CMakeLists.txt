@@ -9,6 +9,7 @@ option(FLASH_TOOL_BUILD_TESTS "Build unit tests" OFF)
 find_package(ZLIB REQUIRED)
 find_package(LibArchive REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 add_library(flash_core
   src/fd.cpp
@@ -22,12 +23,14 @@ add_library(flash_core
   src/version_comparator.cpp
   src/update_policy.cpp
   src/gzip_reader.cpp
+  src/sha256.cpp
   src/update_module.cpp
   src/component_installers.cpp
   src/ota_bundle_reader.cpp
   src/logger.cpp
   src/ota_installer.cpp
   src/ota_install_services.cpp
+  src/staging_verifier.cpp
   src/archive_installer.cpp
   src/progress_sinks.cpp
   src/archive_path_policy.cpp
@@ -37,7 +40,7 @@ add_library(flash_core
 )
 
 target_include_directories(flash_core PUBLIC include)
-target_link_libraries(flash_core PUBLIC nlohmann_json::nlohmann_json ZLIB::ZLIB LibArchive::LibArchive)
+target_link_libraries(flash_core PUBLIC nlohmann_json::nlohmann_json ZLIB::ZLIB LibArchive::LibArchive OpenSSL::Crypto)
 
 add_executable(flash_tool src/main.cpp)
 target_link_libraries(flash_tool PRIVATE flash_core)

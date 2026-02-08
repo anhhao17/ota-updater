@@ -43,6 +43,18 @@ ssize_t GzipReader::Read(std::span<std::uint8_t> out) {
 
         if (ret == Z_STREAM_END) {
             eof_reached_ = true;
+            if (!drained_source_) {
+                // Discard any buffered compressed bytes.
+                strm_.avail_in = 0;
+
+                // Drain remaining source bytes so downstream hash sees full entry.
+                while (true) {
+                    const ssize_t n = source_->Read(in_buffer_);
+                    if (n < 0) return -1;
+                    if (n == 0) break;
+                }
+                drained_source_ = true;
+            }
             break;
         }
 

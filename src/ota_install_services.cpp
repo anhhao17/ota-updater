@@ -2,12 +2,16 @@
 
 #include "flash/logger.hpp"
 #include "flash/path_utils.hpp"
+#include "flash/staging_verifier.hpp"
 
 #include <memory>
 #include <string>
 
 namespace flash {
 
+namespace {
+const OtaEntryStager kEntryStager{};
+} // namespace
 ComponentIndex::ComponentIndex(const Manifest& manifest) {
     by_filename_.reserve(manifest.components.size());
     for (const auto& component : manifest.components) {
@@ -134,6 +138,16 @@ Result InstallCoordinator::InstallMatchingEntries(OtaTarBundleReader& bundle,
         std::unique_ptr<IReader> entry_reader;
         auto open_entry_result = bundle.OpenCurrentEntryReader(entry_reader);
         if (!open_entry_result.is_ok()) return open_entry_result;
+
+        const std::string expected_sha256 = component->sha256;
+        StagedEntry staged;
+        if (!expected_sha256.empty()) {
+            auto vr = kEntryStager.StageAndVerify(entry_reader, expected_sha256, staged);
+            if (!vr.is_ok()) {
+                return Result::Fail(-1, "component '" + component->name + "' sha256 verify failed: " + vr.message());
+            }
+            entry_reader = std::move(staged.reader);
+        }
 
         const std::uint64_t comp_total = component->size > 0 ? component->size : entry.size;
         auto update_result = update_module_.ExecuteComponent(

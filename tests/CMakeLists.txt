@@ -3,6 +3,7 @@ add_executable(flash_tool_tests
   test_partition_writer.cpp
   test_fd.cpp
   test_manifest.cpp
+  test_sha256.cpp
   test_gzip_reader.cpp
   test_path_utils.cpp
   test_update_module.cpp
