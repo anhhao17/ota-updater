@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "flash/manifest.hpp"
+#include "util/manifest.hpp"
 
 using namespace flash;
 

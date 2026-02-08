@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "flash/update_module.hpp"
+#include "ota/update_module.hpp"
 #include "testing.hpp"
 
 namespace flash {

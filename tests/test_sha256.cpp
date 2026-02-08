@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "flash/sha256.hpp"
+#include "crypto/sha256.hpp"
 
 #include <cstring>
 #include <string>

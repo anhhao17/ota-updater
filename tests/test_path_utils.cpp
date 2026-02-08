@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "flash/path_utils.hpp"
+#include "util/path_utils.hpp"
 
 TEST(PathUtilsTest, IsDevPath) {
     EXPECT_TRUE(flash::IsDevPath("/dev/mmcblk0p1"));

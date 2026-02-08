@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "flash/file_reader.hpp"
-#include "flash/result.hpp"
+#include "io/file_reader.hpp"
+#include "util/result.hpp"
 
 #include "testing.hpp"
 

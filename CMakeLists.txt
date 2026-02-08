@@ -12,33 +12,34 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 add_library(flash_core
-  src/fd.cpp
-  src/file_reader.cpp
-  src/partition_writer.cpp
-  src/signals.cpp
-  src/config_parser.cpp
-  src/config_json_utils.cpp
-  src/device_config.cpp
-  src/manifest.cpp
-  src/manifest_parser.cpp
-  src/manifest_selector.cpp
-  src/version_comparator.cpp
-  src/update_policy.cpp
-  src/gzip_reader.cpp
-  src/sha256.cpp
-  src/update_module.cpp
-  src/component_installers.cpp
-  src/ota_bundle_reader.cpp
-  src/logger.cpp
-  src/ota_installer.cpp
-  src/ota_install_services.cpp
-  src/staging_verifier.cpp
-  src/archive_installer.cpp
-  src/progress_sinks.cpp
-  src/archive_path_policy.cpp
-  src/mount_session.cpp
-  src/tar_stream_reader_adapter.cpp
-  src/tar_stream_extractor.cpp
+  src/io/fd.cpp
+  src/io/file_reader.cpp
+  src/io/partition_writer.cpp
+  src/io/gzip_reader.cpp
+  src/system/signals.cpp
+  src/util/config_parser.cpp
+  src/util/config_json_utils.cpp
+  src/util/device_config.cpp
+  src/util/manifest.cpp
+  src/util/manifest_parser.cpp
+  src/util/manifest_selector.cpp
+  src/util/version_comparator.cpp
+  src/util/update_policy.cpp
+  src/crypto/sha256.cpp
+  src/ota/update_module.cpp
+  src/ota/component_installers.cpp
+  src/ota/ota_bundle_reader.cpp
+  src/util/logger.cpp
+  src/ota/ota_installer.cpp
+  src/ota/ota_install_services.cpp
+  src/ota/staging_verifier.cpp
+  src/ota/archive_installer.cpp
+  src/ota/progress_sinks.cpp
+  src/ota/archive_path_policy.cpp
+  src/ota/mount_session.cpp
+  src/ota/tar_stream_reader_adapter.cpp
+  src/ota/tar_stream_extractor.cpp
+  src/util/console_progress.cpp
 )
 
 target_include_directories(flash_core PUBLIC include)

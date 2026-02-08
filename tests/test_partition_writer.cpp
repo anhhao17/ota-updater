@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "flash/partition_writer.hpp"
-#include "flash/result.hpp"
+#include "io/partition_writer.hpp"
+#include "util/result.hpp"
 
 #include "testing.hpp"
 

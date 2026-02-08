@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include <string>
-#include "flash/gzip_reader.hpp"
+#include "io/gzip_reader.hpp"
 
 namespace flash {
 

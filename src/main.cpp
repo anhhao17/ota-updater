@@ -1,9 +1,9 @@
 #define _FILE_OFFSET_BITS 64
 
-#include "flash/logger.hpp"
-#include "flash/ota_installer.hpp"
-#include "flash/progress_sinks.hpp"
-#include "flash/signals.hpp"
+#include "util/logger.hpp"
+#include "ota/ota_installer.hpp"
+#include "ota/progress_sinks.hpp"
+#include "system/signals.hpp"
 
 #include <getopt.h>
 #include <string>
