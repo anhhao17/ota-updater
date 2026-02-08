@@ -61,7 +61,7 @@ cat > manifest.json <<EOF
         "name": "rootfs",
         "type": "archive",
         "filename": "core-image-full-cmdline.tar.gz",
-        "install_to": "/tmp/inactive-root-b",
+        "install_to": "build/tmp/inactive-root-b",
         "size": $SIZE_ROOTFS,
         "sha256": "$SHA_ROOTFS"
       },
@@ -69,7 +69,7 @@ cat > manifest.json <<EOF
         "name": "kernel",
         "type": "raw",
         "filename": "tegra-minimal-initramfs.cboot",
-        "install_to": "/tmp/inactive-kernel-b",
+        "install_to": "build/tmp/inactive-kernel-b",
         "size": $SIZE_KERNEL,
         "sha256": "$SHA_KERNEL"
       },
@@ -78,7 +78,7 @@ cat > manifest.json <<EOF
         "type": "file",
         "create-destination": true,
         "filename": "tegra-bl.cap",
-        "path": "/tmp/ota_test/TEGRA_BL.Cap",
+        "path": "build/tmp/ota_test/TEGRA_BL.Cap",
         "size": $SIZE_BL,
         "sha256": "$SHA_BL",
         "version": "36.4.4"
@@ -87,7 +87,7 @@ cat > manifest.json <<EOF
         "name": "wifi-config",
         "type": "file",
         "filename": "wpa_supplicant.conf",
-        "path": "/tmp/ota_test/wpa_supplicant.conf",
+        "path": "build/tmp/ota_test/wpa_supplicant.conf",
         "permissions": "0600",
         "size": $SIZE_WIFI,
         "sha256": "$SHA_WIFI"
@@ -100,7 +100,7 @@ cat > manifest.json <<EOF
         "name": "rootfs",
         "type": "archive",
         "filename": "core-image-full-cmdline.tar.gz",
-        "install_to": "/tmp/inactive-root-a",
+        "install_to": "build/tmp/inactive-root-a",
         "size": $SIZE_ROOTFS,
         "sha256": "$SHA_ROOTFS"
       },
@@ -108,7 +108,7 @@ cat > manifest.json <<EOF
         "name": "kernel",
         "type": "raw",
         "filename": "tegra-minimal-initramfs.cboot",
-        "install_to": "/tmp/inactive-kernel-a",
+        "install_to": "build/tmp/inactive-kernel-a",
         "size": $SIZE_KERNEL,
         "sha256": "$SHA_KERNEL"
       },
@@ -117,7 +117,7 @@ cat > manifest.json <<EOF
         "type": "file",
         "create-destination": true,
         "filename": "tegra-bl.cap",
-        "path": "/tmp/ota_test/TEGRA_BL.Cap",
+        "path": "build/tmp/ota_test/TEGRA_BL.Cap",
         "size": $SIZE_BL,
         "sha256": "$SHA_BL",
         "version": "36.4.4"
@@ -126,7 +126,7 @@ cat > manifest.json <<EOF
         "name": "wifi-config",
         "type": "file",
         "filename": "wpa_supplicant.conf",
-        "path": "/tmp/ota_test/wpa_supplicant.conf",
+        "path": "build/tmp/ota_test/wpa_supplicant.conf",
         "permissions": "0600",
         "size": $SIZE_WIFI,
         "sha256": "$SHA_WIFI"

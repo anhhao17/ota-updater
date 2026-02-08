@@ -34,7 +34,7 @@ std::expected<std::vector<Component>, std::string> ParseComponentsArray(const js
         c.force = item.value("force", false);
         c.install_to = item.value("install_to", "");
         c.path = item.value("path", "");
-        c.permissions = item.value("permissions", "0644");
+        c.permissions = item.value("permissions", "");
         c.create_destination = item.value("create-destination", false);
         out.push_back(c);
     }

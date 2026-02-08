@@ -19,7 +19,7 @@ struct Component {
     
     std::string install_to;   
     std::string path;         
-    std::string permissions = "0644";
+    std::string permissions = "";
     bool create_destination = false;
 };
 

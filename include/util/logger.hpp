@@ -23,35 +23,24 @@ public:
     // printf-style logging
     void Log(LogLevel lvl, const char* fmt, ...) __attribute__((format(printf, 3, 4)));
     void VLog(LogLevel lvl, const char* fmt, va_list ap);
+    void LogWithSource(LogLevel lvl,
+                       const char* file,
+                       int line,
+                       const char* fmt,
+                       ...) __attribute__((format(printf, 5, 6)));
+    void VLogWithSource(LogLevel lvl,
+                        const char* file,
+                        int line,
+                        const char* fmt,
+                        va_list ap);
 
 private:
     Logger() = default;
 };
 
-inline void LogDebug(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
-inline void LogInfo (const char* fmt, ...) __attribute__((format(printf, 1, 2)));
-inline void LogWarn (const char* fmt, ...) __attribute__((format(printf, 1, 2)));
-inline void LogError(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
-
-inline void LogDebug(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    Logger::Instance().VLog(LogLevel::Debug, fmt, ap);
-    va_end(ap);
-}
-inline void LogInfo(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    Logger::Instance().VLog(LogLevel::Info, fmt, ap);
-    va_end(ap);
-}
-inline void LogWarn(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    Logger::Instance().VLog(LogLevel::Warn, fmt, ap);
-    va_end(ap);
-}
-inline void LogError(const char* fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    Logger::Instance().VLog(LogLevel::Error, fmt, ap);
-    va_end(ap);
-}
+#define LogDebug(...) ::flash::Logger::Instance().LogWithSource(::flash::LogLevel::Debug, __FILE__, __LINE__, __VA_ARGS__)
+#define LogInfo(...)  ::flash::Logger::Instance().LogWithSource(::flash::LogLevel::Info,  __FILE__, __LINE__, __VA_ARGS__)
+#define LogWarn(...)  ::flash::Logger::Instance().LogWithSource(::flash::LogLevel::Warn,  __FILE__, __LINE__, __VA_ARGS__)
+#define LogError(...) ::flash::Logger::Instance().LogWithSource(::flash::LogLevel::Error, __FILE__, __LINE__, __VA_ARGS__)
 
 } // namespace flash

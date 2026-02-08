@@ -7,11 +7,8 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include <cerrno>
-#include <cstring>
-#include <fcntl.h>
+#include <filesystem>
 #include <memory>
-#include <unistd.h>
 
 namespace flash {
 
@@ -29,36 +26,15 @@ struct ArchiveWriteDeleter {
     }
 };
 
-class ChdirGuard {
-public:
-    explicit ChdirGuard(const std::string& new_dir) {
-        old_fd_ = ::open(".", O_RDONLY | O_DIRECTORY);
-        if (old_fd_ < 0) return;
-
-        if (::chdir(new_dir.c_str()) != 0) {
-            ::close(old_fd_);
-            old_fd_ = -1;
-        }
-    }
-
-    ~ChdirGuard() {
-        if (old_fd_ >= 0) {
-            (void)::fchdir(old_fd_);
-            ::close(old_fd_);
-        }
-    }
-
-    bool ok() const { return old_fd_ >= 0; }
-
-private:
-    int old_fd_ = -1;
-};
-
 } // namespace
 
 Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
                                         const std::string& dst_dir,
                                         std::string_view tag) const {
+    namespace fs = std::filesystem;
+
+    const fs::path base_dir(dst_dir);
+
     std::unique_ptr<archive, ArchiveReadDeleter> ar(archive_read_new());
     if (!ar) return Result::Fail(-1, "archive_read_new failed");
 
@@ -78,16 +54,18 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
     flags |= ARCHIVE_EXTRACT_TIME;
     flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
     flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
-#if defined(ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS)
-    flags |= ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS;
-#endif
+    // We rewrite entry paths to absolute paths under dst_dir, so NOABSOLUTEPATHS
+    // would reject all valid extraction targets.
 
     archive_write_disk_set_options(aw.get(), flags);
     archive_write_disk_set_standard_lookup(aw.get());
 
-    ChdirGuard cd(dst_dir);
-    if (!cd.ok()) {
-        return Result::Fail(errno, "chdir(dst_dir) failed: " + std::string(std::strerror(errno)));
+    std::error_code ec;
+    if (!fs::exists(base_dir, ec) || ec) {
+        return Result::Fail(-1, "Destination directory does not exist: " + dst_dir);
+    }
+    if (!fs::is_directory(base_dir, ec) || ec) {
+        return Result::Fail(-1, "Destination path is not a directory: " + dst_dir);
     }
 
     ArchivePathPolicy path_policy(opt_.safe_paths_only);
@@ -96,6 +74,22 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
     std::uint64_t extracted = 0;
     std::uint64_t next_progress =
         (opt_.progress_interval_bytes ? opt_.progress_interval_bytes : (4ULL * 1024 * 1024ULL));
+
+    auto emit_progress = [&]() {
+        if (opt_.progress_sink) {
+            ProgressEvent event{};
+            event.component = tag;
+            event.comp_done = extracted;
+            event.comp_total = declared_total;
+            event.overall_done = opt_.overall_done_base_bytes + extracted;
+            event.overall_total = opt_.overall_total_bytes;
+            opt_.progress_sink->OnProgress(event);
+        } else if (opt_.progress && opt_.progress_interval_bytes > 0 && extracted >= next_progress) {
+            LogInfo("[%.*s] extract progress: %llu bytes",
+                    (int)tag.size(), tag.data(), (unsigned long long)extracted);
+            next_progress = extracted + opt_.progress_interval_bytes;
+        }
+    };
 
     archive_entry* entry = nullptr;
 
@@ -112,16 +106,18 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
             continue;
         }
 
-        archive_entry_set_pathname(entry, rel.c_str());
+        const std::string target_path = (base_dir / fs::path(rel)).string();
+        archive_entry_set_pathname(entry, target_path.c_str());
 
         std::string rel_hl;
         auto hl_res = path_policy.NormalizeHardlinkPath(archive_entry_hardlink(entry), rel_hl);
         if (!hl_res.is_ok()) return hl_res;
         if (!rel_hl.empty() && rel_hl != ".") {
-            archive_entry_set_hardlink(entry, rel_hl.c_str());
+            const std::string hardlink_target = (base_dir / fs::path(rel_hl)).string();
+            archive_entry_set_hardlink(entry, hardlink_target.c_str());
         }
 
-        LogDebug("[%.*s] entry: %s/%s", (int)tag.size(), tag.data(), dst_dir.c_str(), rel.c_str());
+        LogDebug("[%.*s] entry: %s", (int)tag.size(), tag.data(), target_path.c_str());
 
         const int wh = archive_write_header(aw.get(), entry);
         if (wh != ARCHIVE_OK) return Result::Fail(-1, "archive_write_header: " + ArchiveErr(aw.get()));
@@ -139,19 +135,7 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
             if (ww != ARCHIVE_OK) return Result::Fail(-1, "archive_write_data_block: " + ArchiveErr(aw.get()));
 
             extracted += static_cast<std::uint64_t>(size);
-            if (opt_.progress_sink) {
-                ProgressEvent event{};
-                event.component = tag;
-                event.comp_done = extracted;
-                event.comp_total = declared_total;
-                event.overall_done = opt_.overall_done_base_bytes + extracted;
-                event.overall_total = opt_.overall_total_bytes;
-                opt_.progress_sink->OnProgress(event);
-            } else if (opt_.progress && opt_.progress_interval_bytes > 0 && extracted >= next_progress) {
-                LogInfo("[%.*s] extract progress: %llu bytes",
-                        (int)tag.size(), tag.data(), (unsigned long long)extracted);
-                next_progress = extracted + opt_.progress_interval_bytes;
-            }
+            emit_progress();
         }
 
         const int wf = archive_write_finish_entry(aw.get());
@@ -159,13 +143,7 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
     }
 
     if (opt_.progress_sink) {
-        ProgressEvent event{};
-        event.component = tag;
-        event.comp_done = extracted;
-        event.comp_total = declared_total;
-        event.overall_done = opt_.overall_done_base_bytes + extracted;
-        event.overall_total = opt_.overall_total_bytes;
-        opt_.progress_sink->OnProgress(event);
+        emit_progress();
     }
 
     return Result::Ok();

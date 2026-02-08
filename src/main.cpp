@@ -18,7 +18,7 @@ struct CliOptions {
 };
 
 void PrintUsage(const char* argv0) {
-    flash::LogError("Usage: %s -i <ota.tar | -> [-v] [--progress-file <path>]", argv0);
+    LogError("Usage: %s -i <ota.tar | -> [-v] [--progress-file <path>]", argv0);
 }
 
 bool ParseCliOptions(int argc, char** argv, CliOptions& out) {
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     installer.SetProgressSink(progress_sink.get());
     auto r = installer.Run(options.input_path);
     if (!r.is_ok()) {
-        flash::LogError("%s", r.message().c_str());
+        LogError("%s", r.message().c_str());
         return 1;
     }
     return 0;

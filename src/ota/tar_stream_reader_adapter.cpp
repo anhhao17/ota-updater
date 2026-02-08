@@ -3,6 +3,7 @@
 #include "system/signals.hpp"
 
 #include <cerrno>
+#include <memory>
 #include <vector>
 
 namespace flash {
@@ -39,11 +40,12 @@ int CloseCb(struct archive*, void* client_data) {
 } // namespace
 
 int OpenArchiveFromReader(struct archive* ar, IReader& reader) {
-    auto* ctx = new ReaderCtx(reader);
-    const int rc = archive_read_open2(ar, ctx, nullptr, ReadCb, nullptr, CloseCb);
+    auto ctx = std::make_unique<ReaderCtx>(reader);
+    const int rc = archive_read_open2(ar, ctx.get(), nullptr, ReadCb, nullptr, CloseCb);
     if (rc != ARCHIVE_OK) {
-        delete ctx;
+        return rc;
     }
+    (void)ctx.release();
     return rc;
 }
 
