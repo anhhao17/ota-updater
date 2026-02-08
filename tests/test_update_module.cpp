@@ -9,21 +9,6 @@
 
 namespace flash {
 
-class MemoryReader : public IReader {
-public:
-    explicit MemoryReader(std::string data) : data_(std::move(data)), pos_(0) {}
-    ssize_t Read(std::span<std::uint8_t> out) override {
-        if (pos_ >= data_.size()) return 0;
-        size_t n = std::min(out.size(), data_.size() - pos_);
-        std::copy(data_.begin() + pos_, data_.begin() + pos_ + n, out.begin());
-        pos_ += n;
-        return static_cast<ssize_t>(n);
-    }
-private:
-    std::string data_;
-    size_t pos_;
-};
-
 class UpdateModuleTest : public ::testing::Test {
 protected:
     testutil::TemporaryDirectory temp_dir;
@@ -44,7 +29,7 @@ TEST_F(UpdateModuleTest, ExecuteAtomicFile) {
     comp.permissions = "0600";
 
     std::string expected_content = "SECRET_KEY=12345";
-    auto reader = std::make_unique<MemoryReader>(expected_content);
+    auto reader = std::make_unique<testutil::MemoryReader>(expected_content);
 
     // Call the public entry point
     Result res = module.Execute(comp, std::move(reader));
@@ -77,7 +62,7 @@ TEST_F(UpdateModuleTest, ExecuteGzippedRaw) {
         0xcb, 0x48, 0xcd, 0xc9, 0xc9, 0x07, 0x00, 0x86, 0xa6, 0x10, 0x36, 0x05, 0x00, 0x00, 0x00
     };
     
-    auto reader = std::make_unique<MemoryReader>(std::string(gz_data.begin(), gz_data.end()));
+    auto reader = std::make_unique<testutil::MemoryReader>(std::move(gz_data));
 
     Result res = module.Execute(comp, std::move(reader));
     
@@ -96,7 +81,7 @@ TEST_F(UpdateModuleTest, ExecuteAtomicFile_MissingDirectoryWithoutCreateDestinat
     comp.path = GetTestPath("missing/dir/config.txt");
     comp.create_destination = false;
 
-    auto reader = std::make_unique<MemoryReader>("hello");
+    auto reader = std::make_unique<testutil::MemoryReader>("hello");
     Result res = UpdateModule::Execute(comp, std::move(reader));
     ASSERT_FALSE(res.is_ok());
     EXPECT_NE(res.msg.find("Destination directory does not exist"), std::string::npos);
@@ -110,7 +95,7 @@ TEST_F(UpdateModuleTest, ExecuteAtomicFile_CreateDestination_Succeeds) {
     comp.create_destination = true;
     comp.permissions = "0640";
 
-    auto reader = std::make_unique<MemoryReader>("key=value");
+    auto reader = std::make_unique<testutil::MemoryReader>("key=value");
     Result res = UpdateModule::Execute(comp, std::move(reader));
     ASSERT_TRUE(res.is_ok()) << res.msg;
 
@@ -126,7 +111,7 @@ TEST_F(UpdateModuleTest, ExecuteAtomicFile_InvalidPermissions_Fails) {
     comp.path = GetTestPath("config.txt");
     comp.permissions = "invalid";
 
-    auto reader = std::make_unique<MemoryReader>("content");
+    auto reader = std::make_unique<testutil::MemoryReader>("content");
     Result res = UpdateModule::Execute(comp, std::move(reader));
     ASSERT_FALSE(res.is_ok());
     EXPECT_NE(res.msg.find("Invalid permissions value"), std::string::npos);
@@ -137,7 +122,7 @@ TEST_F(UpdateModuleTest, ExecuteUnsupportedType_Fails) {
     comp.name = "x";
     comp.type = "unknown";
 
-    auto reader = std::make_unique<MemoryReader>("content");
+    auto reader = std::make_unique<testutil::MemoryReader>("content");
     Result res = UpdateModule::Execute(comp, std::move(reader));
     ASSERT_FALSE(res.is_ok());
     EXPECT_NE(res.msg.find("Unsupported component type"), std::string::npos);
@@ -149,7 +134,7 @@ TEST_F(UpdateModuleTest, ExecuteRawWithoutTarget_Fails) {
     comp.type = "raw";
     comp.install_to.clear();
 
-    auto reader = std::make_unique<MemoryReader>("payload");
+    auto reader = std::make_unique<testutil::MemoryReader>("payload");
     Result res = UpdateModule::Execute(comp, std::move(reader));
     ASSERT_FALSE(res.is_ok());
     EXPECT_NE(res.msg.find("install_to empty"), std::string::npos);

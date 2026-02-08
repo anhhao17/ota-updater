@@ -2,9 +2,26 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
 #include <vector>
 
 namespace flash {
+
+namespace {
+
+constexpr size_t kArchiveReadBufferSize = 64 * 1024;
+
+std::string ArchiveErrorText(struct archive* ar) {
+    if (!ar) return "unknown";
+    const char* em = archive_error_string(ar);
+    return em ? std::string(em) : std::string("unknown");
+}
+
+Result ArchiveFailure(struct archive* ar, const std::string& prefix) {
+    return Result::Fail(-1, prefix + ": " + ArchiveErrorText(ar));
+}
+
+} // namespace
 
 OtaTarBundleReader::~OtaTarBundleReader() {
     if (ar_) {
@@ -26,10 +43,10 @@ Result OtaTarBundleReader::Open(IReader& src) {
     struct Ctx {
         IReader* r = nullptr;
         std::vector<std::uint8_t> buf;
-        explicit Ctx(IReader& rr) : r(&rr), buf(64 * 1024) {}
+        explicit Ctx(IReader& rr) : r(&rr), buf(kArchiveReadBufferSize) {}
     };
 
-    auto* ctx = new Ctx(src);
+    auto ctx = std::make_unique<Ctx>(src);
 
     auto read_cb = [](archive*, void* cd, const void** buff) -> la_ssize_t {
         auto* c = static_cast<Ctx*>(cd);
@@ -45,13 +62,19 @@ Result OtaTarBundleReader::Open(IReader& src) {
         return ARCHIVE_OK;
     };
 
-    if (archive_read_open2(ar_, ctx, /*open*/nullptr, read_cb, /*skip*/nullptr, close_cb) != ARCHIVE_OK) {
-        std::string em = archive_error_string(ar_) ? archive_error_string(ar_) : "unknown";
+    if (archive_read_open2(ar_,
+                           ctx.get(),
+                           /*open*/nullptr,
+                           read_cb,
+                           /*skip*/nullptr,
+                           close_cb) != ARCHIVE_OK) {
+        Result fail = ArchiveFailure(ar_, "archive_read_open2 failed");
         archive_read_free(ar_);
         ar_ = nullptr;
-        return Result::Fail(-1, "archive_read_open2 failed: " + em);
+        return fail;
     }
 
+    (void)ctx.release();
     opened_ = true;
     return Result::Ok();
 }
@@ -72,8 +95,7 @@ Result OtaTarBundleReader::Next(BundleEntryInfo& out, bool& eof) {
             return Result::Ok();
         }
         if (r != ARCHIVE_OK) {
-            std::string em = archive_error_string(ar_) ? archive_error_string(ar_) : "unknown";
-            return Result::Fail(-1, "archive_read_next_header: " + em);
+            return ArchiveFailure(ar_, "archive_read_next_header");
         }
 
         // Only regular files
@@ -96,8 +118,7 @@ Result OtaTarBundleReader::Next(BundleEntryInfo& out, bool& eof) {
 Result OtaTarBundleReader::SkipCurrent() {
     if (!in_entry_) return Result::Ok();
     if (archive_read_data_skip(ar_) != ARCHIVE_OK) {
-        std::string em = archive_error_string(ar_) ? archive_error_string(ar_) : "unknown";
-        return Result::Fail(-1, "archive_read_data_skip: " + em);
+        return ArchiveFailure(ar_, "archive_read_data_skip");
     }
     in_entry_ = false;
     return Result::Ok();
@@ -107,13 +128,12 @@ Result OtaTarBundleReader::ReadCurrentToString(std::string& out) {
     if (!in_entry_) return Result::Fail(-1, "No current entry");
     out.clear();
 
-    std::vector<std::uint8_t> buf(64 * 1024);
+    std::vector<std::uint8_t> buf(kArchiveReadBufferSize);
     while (true) {
         const la_ssize_t n = archive_read_data(ar_, buf.data(), buf.size());
         if (n == 0) break;
         if (n < 0) {
-            std::string em = archive_error_string(ar_) ? archive_error_string(ar_) : "unknown";
-            return Result::Fail(-1, "archive_read_data: " + em);
+            return ArchiveFailure(ar_, "archive_read_data");
         }
         out.append(reinterpret_cast<const char*>(buf.data()), static_cast<size_t>(n));
     }

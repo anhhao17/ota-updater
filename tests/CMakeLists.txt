@@ -7,6 +7,8 @@ add_executable(flash_tool_tests
   test_gzip_reader.cpp
   test_path_utils.cpp
   test_update_module.cpp
+  test_mount_session.cpp
+  test_ota_bundle_reader.cpp
 )
 
 target_link_libraries(flash_tool_tests PRIVATE
