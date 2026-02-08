@@ -9,9 +9,6 @@ HOST_TEST_BUILD_DIR="build/host-tests"
 
 conan profile detect --force >/dev/null 2>&1 || true
 
-rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR"
-
 conan install . \
   -pr:b "$PROFILE_BUILD" \
   -pr:h "$PROFILE_HOST" \
@@ -28,9 +25,6 @@ cmake -S . -B build/aarch64 \
   -DCMAKE_BUILD_TYPE=Release
 
 cmake --build "$BUILD_DIR" -j
-
-# Cross builds do not register gtest cases in this project, so run tests in a native host build.
-rm -rf "$HOST_TEST_BUILD_DIR"
 
 conan install . \
   -pr:b "$PROFILE_BUILD" \
