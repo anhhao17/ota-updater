@@ -28,6 +28,7 @@ std::expected<Manifest, std::string> ManifestParser::Parse(const std::string& js
                 c.name = item.value("name", "");
                 c.type = item.value("type", "");
                 c.filename = item.value("filename", "");
+                c.size = item.value("size", 0ULL);
                 c.sha256 = item.value("sha256", "");
                 c.version = item.value("version", "0.0.0");
                 c.force = item.value("force", false);

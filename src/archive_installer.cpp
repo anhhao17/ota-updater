@@ -29,6 +29,10 @@ Result ArchiveInstaller::InstallTarStreamToTarget(IReader& tar_stream,
     xopt.progress = opt_.progress;
     xopt.progress_interval_bytes = opt_.progress_interval_bytes;
     xopt.safe_paths_only = opt_.safe_paths_only;
+    xopt.progress_sink = opt_.progress_sink;
+    xopt.component_total_bytes = opt_.component_total_bytes;
+    xopt.overall_total_bytes = opt_.overall_total_bytes;
+    xopt.overall_done_base_bytes = opt_.overall_done_base_bytes;
     TarStreamExtractor extractor(xopt);
 
     if (IsDevPath(install_to)) {

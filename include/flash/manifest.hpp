@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <expected>
@@ -10,6 +11,7 @@ struct Component {
     std::string name;
     std::string type;
     std::string filename;
+    std::uint64_t size = 0;
     std::string sha256;
     std::string version;
     bool force = false;

@@ -32,6 +32,7 @@ void EmitProgress(const UpdateModule::Options& opt,
         opt.progress_sink->OnProgress(event);
     }
 
+    if (opt.progress_sink) return;
     if (!opt.progress) return;
 
     if (opt.component_total_bytes > 0) {
@@ -151,7 +152,7 @@ public:
         if (n <= 0) return n;
 
         local_read_ += static_cast<std::uint64_t>(n);
-        const std::uint64_t in_done = in_read_ ? *in_read_ : local_read_;
+        const std::uint64_t in_done = (in_read_ && *in_read_ > 0) ? *in_read_ : local_read_;
 
         if ((opt_.progress || opt_.progress_sink) && opt_.progress_interval_bytes > 0) {
             if (in_done >= next_progress_) {
@@ -216,8 +217,12 @@ public:
         }
 
         ArchiveInstaller::Options aopt;
-        aopt.progress = opt.progress;
+        aopt.progress = opt.progress && (opt.progress_sink == nullptr);
         aopt.progress_interval_bytes = opt.progress_interval_bytes;
+        aopt.progress_sink = opt.progress_sink;
+        aopt.component_total_bytes = opt.component_total_bytes;
+        aopt.overall_total_bytes = opt.overall_total_bytes;
+        aopt.overall_done_base_bytes = opt.overall_done_base_bytes;
 
         ArchiveInstaller installer(aopt);
         ProgressReader progress_reader(reader, opt, tag, in_read);

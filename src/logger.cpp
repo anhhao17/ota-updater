@@ -1,4 +1,5 @@
 #include "flash/logger.hpp"
+#include "flash/progress_sinks.hpp"
 
 #include <cstdio>
 #include <mutex>
@@ -53,6 +54,9 @@ void Logger::VLog(LogLevel lvl, const char* fmt, va_list ap) {
 
     // Print to stderr (typical for tools)
     std::lock_guard<std::mutex> lk(g_mu);
+    if (IsProgressLineActive()) {
+        ClearProgressLine();
+    }
     std::fprintf(stderr, "[%s] ", ToStr(lvl));
     std::vfprintf(stderr, fmt, ap);
     std::fprintf(stderr, "\n");

@@ -91,6 +91,7 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
     }
 
     ArchivePathPolicy path_policy(opt_.safe_paths_only);
+    const std::uint64_t declared_total = opt_.component_total_bytes;
 
     std::uint64_t extracted = 0;
     std::uint64_t next_progress =
@@ -138,7 +139,15 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
             if (ww != ARCHIVE_OK) return Result::Fail(-1, "archive_write_data_block: " + ArchiveErr(aw.get()));
 
             extracted += static_cast<std::uint64_t>(size);
-            if (opt_.progress && opt_.progress_interval_bytes > 0 && extracted >= next_progress) {
+            if (opt_.progress_sink) {
+                ProgressEvent event{};
+                event.component = tag;
+                event.comp_done = extracted;
+                event.comp_total = declared_total;
+                event.overall_done = opt_.overall_done_base_bytes + extracted;
+                event.overall_total = opt_.overall_total_bytes;
+                opt_.progress_sink->OnProgress(event);
+            } else if (opt_.progress && opt_.progress_interval_bytes > 0 && extracted >= next_progress) {
                 LogInfo("[%.*s] extract progress: %llu bytes",
                         (int)tag.size(), tag.data(), (unsigned long long)extracted);
                 next_progress = extracted + opt_.progress_interval_bytes;
@@ -147,6 +156,16 @@ Result TarStreamExtractor::ExtractToDir(IReader& tar_stream,
 
         const int wf = archive_write_finish_entry(aw.get());
         if (wf != ARCHIVE_OK) return Result::Fail(-1, "archive_write_finish_entry: " + ArchiveErr(aw.get()));
+    }
+
+    if (opt_.progress_sink) {
+        ProgressEvent event{};
+        event.component = tag;
+        event.comp_done = extracted;
+        event.comp_total = declared_total;
+        event.overall_done = opt_.overall_done_base_bytes + extracted;
+        event.overall_total = opt_.overall_total_bytes;
+        opt_.progress_sink->OnProgress(event);
     }
 
     return Result::Ok();

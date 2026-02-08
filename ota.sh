@@ -1,25 +1,32 @@
 set -euo pipefail
 
 WORKDIR="$(pwd)/ota_sample"
+ROOTFS_SIZE_MB="${ROOTFS_SIZE_MB:-1024}"
+KERNEL_SIZE_MB="${KERNEL_SIZE_MB:-64}"
+BOOTLOADER_SIZE_MB="${BOOTLOADER_SIZE_MB:-8}"
+WIFI_SIZE_KB="${WIFI_SIZE_KB:-4}"
 rm -rf "$WORKDIR"
 mkdir -p "$WORKDIR/payload"
 
-# 1) Make a tiny rootfs directory then pack it as tar.gz (archive component)
+# 1) Make a rootfs directory with a large dummy payload then pack it as tar.gz
 mkdir -p "$WORKDIR/rootfs/etc" "$WORKDIR/rootfs/bin"
 echo "hello from rootfs" > "$WORKDIR/rootfs/etc/issue"
 printf '#!/bin/sh\necho "hello from /bin/hello"\n' > "$WORKDIR/rootfs/bin/hello"
 chmod +x "$WORKDIR/rootfs/bin/hello"
 
+dd if=/dev/zero of="$WORKDIR/rootfs/large.bin" bs=1M count="$ROOTFS_SIZE_MB" status=none
+
 tar -C "$WORKDIR/rootfs" -czf "$WORKDIR/payload/core-image-full-cmdline.tar.gz" .
 
 # 2) Make a dummy "raw" blob (pretend kernel/initramfs image)
-head -c 1024 </dev/urandom > "$WORKDIR/payload/tegra-minimal-initramfs.cboot"
+dd if=/dev/urandom of="$WORKDIR/payload/tegra-minimal-initramfs.cboot" bs=1M count="$KERNEL_SIZE_MB" status=none
 
 # 3) Make a dummy bootloader capsule file (file component)
-echo "DUMMY CAPSULE" > "$WORKDIR/payload/tegra-bl.cap"
+dd if=/dev/zero of="$WORKDIR/payload/tegra-bl.cap" bs=1M count="$BOOTLOADER_SIZE_MB" status=none
 
 # 4) Make a dummy wifi config file (file component)
-cat > "$WORKDIR/payload/wpa_supplicant.conf" <<'EOF'
+dd if=/dev/zero of="$WORKDIR/payload/wpa_supplicant.conf" bs=1K count="$WIFI_SIZE_KB" status=none
+cat >> "$WORKDIR/payload/wpa_supplicant.conf" <<'EOF'
 ctrl_interface=DIR=/run/wpa_supplicant GROUP=netdev
 update_config=1
 country=US
@@ -37,6 +44,12 @@ SHA_KERNEL="$(sha256sum tegra-minimal-initramfs.cboot | awk '{print $1}')"
 SHA_BL="$(sha256sum tegra-bl.cap | awk '{print $1}')"
 SHA_WIFI="$(sha256sum wpa_supplicant.conf | awk '{print $1}')"
 
+# 5.1) Compute uncompressed/original sizes for accurate progress
+SIZE_ROOTFS="$(du -sb "$WORKDIR/rootfs" | awk '{print $1}')"
+SIZE_KERNEL="$(stat -c %s "$WORKDIR/payload/tegra-minimal-initramfs.cboot")"
+SIZE_BL="$(stat -c %s "$WORKDIR/payload/tegra-bl.cap")"
+SIZE_WIFI="$(stat -c %s "$WORKDIR/payload/wpa_supplicant.conf")"
+
 # 6) Write manifest.json (match filenames exactly)
 cat > manifest.json <<EOF
 {
@@ -48,6 +61,7 @@ cat > manifest.json <<EOF
       "type": "archive",
       "filename": "core-image-full-cmdline.tar.gz",
       "install_to": "inactive_app_partition",
+      "size": $SIZE_ROOTFS,
       "sha256": "$SHA_ROOTFS"
     },
     {
@@ -55,6 +69,7 @@ cat > manifest.json <<EOF
       "type": "raw",
       "filename": "tegra-minimal-initramfs.cboot",
       "install_to": "inactive_kernel_partition",
+      "size": $SIZE_KERNEL,
       "sha256": "$SHA_KERNEL"
     },
     {
@@ -63,6 +78,7 @@ cat > manifest.json <<EOF
       "create-destination": true,
       "filename": "tegra-bl.cap",
       "path": "/tmp/ota_test/TEGRA_BL.Cap",
+      "size": $SIZE_BL,
       "sha256": "$SHA_BL",
       "version": "36.4.4"
     },
@@ -72,6 +88,7 @@ cat > manifest.json <<EOF
       "filename": "wpa_supplicant.conf",
       "path": "/tmp/ota_test/wpa_supplicant.conf",
       "permissions": "0600",
+      "size": $SIZE_WIFI,
       "sha256": "$SHA_WIFI"
     }
   ]

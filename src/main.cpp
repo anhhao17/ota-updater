@@ -76,8 +76,10 @@ int main(int argc, char** argv) {
     std::unique_ptr<flash::IProgress> progress_sink;
     if (!options.progress_file.empty()) {
         progress_sink = std::make_unique<flash::FileProgressSink>(options.progress_file);
-        installer.SetProgressSink(progress_sink.get());
+    } else {
+        progress_sink = std::make_unique<flash::ConsoleProgressSink>();
     }
+    installer.SetProgressSink(progress_sink.get());
     auto r = installer.Run(options.input_path);
     if (!r.is_ok()) {
         flash::LogError("%s", r.message().c_str());

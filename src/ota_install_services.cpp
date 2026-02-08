@@ -87,8 +87,9 @@ std::uint64_t BundlePreScanner::ComputeOverallTotalFromFile(const std::string& i
         if (eof) break;
 
         const std::string entry_name = NormalizeTarPath(entry.name);
-        if (component_index.Contains(entry_name)) {
-            total += entry.size;
+        if (const Component* comp = component_index.Find(entry_name)) {
+            const std::uint64_t comp_size = (comp->size > 0) ? comp->size : entry.size;
+            total += comp_size;
         }
 
         auto skip_result = bundle.SkipCurrent();
@@ -134,15 +135,16 @@ Result InstallCoordinator::InstallMatchingEntries(OtaTarBundleReader& bundle,
         auto open_entry_result = bundle.OpenCurrentEntryReader(entry_reader);
         if (!open_entry_result.is_ok()) return open_entry_result;
 
+        const std::uint64_t comp_total = component->size > 0 ? component->size : entry.size;
         auto update_result = update_module_.ExecuteComponent(
             *component,
             std::move(entry_reader),
-            BuildOptions(entry.size, overall_total, overall_done_base, progress_sink_));
+            BuildOptions(comp_total, overall_total, overall_done_base, progress_sink_));
         if (!update_result.is_ok()) {
             return Result::Fail(-1, "component '" + component->name + "' failed: " + update_result.message());
         }
 
-        overall_done_base += entry.size;
+        overall_done_base += comp_total;
 
         auto skip_result = bundle.SkipCurrent();
         if (!skip_result.is_ok()) return skip_result;

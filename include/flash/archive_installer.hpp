@@ -1,6 +1,7 @@
 #pragma once
 
 #include "flash/io.hpp"
+#include "flash/progress.hpp"
 #include "flash/result.hpp"
 
 #include <cstdint>
@@ -16,6 +17,11 @@ public:
         bool progress = true;
         std::uint64_t progress_interval_bytes = 4 * 1024 * 1024ULL;
         bool safe_paths_only = true;
+
+        IProgress* progress_sink = nullptr;
+        std::uint64_t component_total_bytes = 0;
+        std::uint64_t overall_total_bytes = 0;
+        std::uint64_t overall_done_base_bytes = 0;
 
         std::string mount_base_dir = "/mnt";
         std::string mount_prefix = "ota-";
