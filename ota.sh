@@ -38,7 +38,7 @@ EOF
 chmod 0600 "$WORKDIR/payload/wpa_supplicant.conf"
 
 # 5) Compute sha256 for each artifact (these are the bytes stored inside ota.tar)
-cd "$WORKDIR/payload"
+pushd "$WORKDIR/payload"
 SHA_ROOTFS="$(sha256sum core-image-full-cmdline.tar.gz | awk '{print $1}')"
 SHA_KERNEL="$(sha256sum tegra-minimal-initramfs.cboot | awk '{print $1}')"
 SHA_BL="$(sha256sum tegra-bl.cap | awk '{print $1}')"
@@ -147,3 +147,14 @@ tar -cf "$WORKDIR/ota.tar" \
 echo "Created: $WORKDIR/ota.tar"
 echo "First entries:"
 tar -tf "$WORKDIR/ota.tar" | head -n 5
+
+# 8) Generate ota.conf
+cat > "$WORKDIR/ota.conf" <<'EOF'
+{
+  "current_slot": "slot-a",
+  "hw_compatibility": "jetson-orin-nano-devkit-nvme"
+}
+EOF
+popd
+
+OTA_CONFIG_PATH=$WORKDIR/ota.conf ./build/flash_tool -i $WORKDIR/ota.tar

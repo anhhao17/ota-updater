@@ -56,7 +56,6 @@ fi
 # test on device
 ./ota.sh
 
-${HOST_TEST_BUILD_DIR}/flash_tool -i ota_sample/ota.tar
 # clean up
 rm -rf ./ota_sample
 rm -rf build/tmp/
