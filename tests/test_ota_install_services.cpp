@@ -11,8 +11,8 @@ namespace flash {
 namespace {
 
 std::string HashOf(const std::string& s) {
-    return Sha256Hex(std::span<const std::uint8_t>(
-        reinterpret_cast<const std::uint8_t*>(s.data()), s.size()));
+    return Sha256Hex(
+        std::span<const std::uint8_t>(reinterpret_cast<const std::uint8_t*>(s.data()), s.size()));
 }
 
 TEST(OtaInstallServicesTest, FailsWhenManifestEntryIsMissingFromBundle) {
@@ -23,12 +23,11 @@ TEST(OtaInstallServicesTest, FailsWhenManifestEntryIsMissingFromBundle) {
     const std::string file_b = tmp.Path() + "/b.txt";
 
     const std::string manifest_json =
-        std::string("{\"version\":\"1.0.0\",\"hw_compatibility\":\"board-x\",\"components\":[")
-        + "{\"name\":\"a\",\"type\":\"file\",\"filename\":\"a.bin\",\"path\":\"" + file_a +
-        "\",\"sha256\":\"" + HashOf(payload_a) + "\"},"
-        + "{\"name\":\"b\",\"type\":\"file\",\"filename\":\"b.bin\",\"path\":\"" + file_b +
-        "\",\"sha256\":\"" + HashOf(payload_b) + "\"}"
-        + "]}";
+        std::string("{\"version\":\"1.0.0\",\"hw_compatibility\":\"board-x\",\"components\":[") +
+        "{\"name\":\"a\",\"type\":\"file\",\"filename\":\"a.bin\",\"path\":\"" + file_a +
+        "\",\"sha256\":\"" + HashOf(payload_a) + "\"}," +
+        "{\"name\":\"b\",\"type\":\"file\",\"filename\":\"b.bin\",\"path\":\"" + file_b +
+        "\",\"sha256\":\"" + HashOf(payload_b) + "\"}" + "]}";
 
     auto tar = testutil::BuildTar({
         {"manifest.json", manifest_json, AE_IFREG},

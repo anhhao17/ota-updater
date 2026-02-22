@@ -77,49 +77,48 @@ TEST(MainCliTest, RunsFullChainWithSlotSelectionAndArchiveInstall) {
         reinterpret_cast<const std::uint8_t*>(file_payload.data()), file_payload.size()));
     const std::string rootfs_sha = Sha256OfBytes(rootfs_tar);
 
-    const std::string rootfs_payload(
-        reinterpret_cast<const char*>(rootfs_tar.data()), rootfs_tar.size());
+    const std::string rootfs_payload(reinterpret_cast<const char*>(rootfs_tar.data()),
+                                     rootfs_tar.size());
 
     // slot-a deliberately references a missing filename so this test proves slot-b selection.
-    const std::string manifest_json =
-        std::string("{")
-        + "\"version\":\"2.0.0\","
-          "\"hw_compatibility\":\"board-z\","
-          "\"slot-a\":{\"components\":[{"
-          "\"name\":\"wrong-slot\","
-          "\"type\":\"file\","
-          "\"filename\":\"missing-from-bundle.txt\","
-          "\"path\":\""
-        + (base / "should-not-be-written.txt").string() +
-        "\","
-        "\"sha256\":\"" +
-        file_sha +
-        "\"}]},"
-        "\"slot-b\":{\"components\":["
-        "{"
-        "\"name\":\"cfg\","
-        "\"type\":\"file\","
-        "\"filename\":\"cfg.txt\","
-        "\"path\":\"" +
-        file_output.string() +
-        "\","
-        "\"create-destination\":true,"
-        "\"sha256\":\"" +
-        file_sha +
-        "\"},"
-        "{"
-        "\"name\":\"rootfs\","
-        "\"type\":\"archive\","
-        "\"filename\":\"rootfs.tar\","
-        "\"path\":\"" +
-        archive_output.string() +
-        "\","
-        "\"sha256\":\"" +
-        rootfs_sha + "\"}"
-        "]}}";
+    const std::string manifest_json = std::string("{") +
+                                      "\"version\":\"2.0.0\","
+                                      "\"hw_compatibility\":\"board-z\","
+                                      "\"slot-a\":{\"components\":[{"
+                                      "\"name\":\"wrong-slot\","
+                                      "\"type\":\"file\","
+                                      "\"filename\":\"missing-from-bundle.txt\","
+                                      "\"path\":\"" +
+                                      (base / "should-not-be-written.txt").string() +
+                                      "\","
+                                      "\"sha256\":\"" +
+                                      file_sha +
+                                      "\"}]},"
+                                      "\"slot-b\":{\"components\":["
+                                      "{"
+                                      "\"name\":\"cfg\","
+                                      "\"type\":\"file\","
+                                      "\"filename\":\"cfg.txt\","
+                                      "\"path\":\"" +
+                                      file_output.string() +
+                                      "\","
+                                      "\"create-destination\":true,"
+                                      "\"sha256\":\"" +
+                                      file_sha +
+                                      "\"},"
+                                      "{"
+                                      "\"name\":\"rootfs\","
+                                      "\"type\":\"archive\","
+                                      "\"filename\":\"rootfs.tar\","
+                                      "\"path\":\"" +
+                                      archive_output.string() +
+                                      "\","
+                                      "\"sha256\":\"" +
+                                      rootfs_sha +
+                                      "\"}"
+                                      "]}}";
 
-    const std::string config_json =
-        R"({"current_slot":"slot-b","hw_compatibility":"board-z"})";
+    const std::string config_json = R"({"current_slot":"slot-b","hw_compatibility":"board-z"})";
 
     ASSERT_TRUE(WriteTextFile(config_path.string(), config_json));
 
@@ -131,8 +130,8 @@ TEST(MainCliTest, RunsFullChainWithSlotSelectionAndArchiveInstall) {
     ASSERT_TRUE(WriteBytesFile(ota_path.string(), ota));
 
     const std::string cmd = "OTA_CONFIG_PATH=" + ShellQuote(config_path.string()) + " " +
-                            ShellQuote(FLASH_TOOL_BIN) + " -i " +
-                            ShellQuote(ota_path.string()) + " >/dev/null 2>&1";
+                            ShellQuote(FLASH_TOOL_BIN) + " -i " + ShellQuote(ota_path.string()) +
+                            " >/dev/null 2>&1";
     const int rc = std::system(cmd.c_str());
     ASSERT_EQ(ExitCodeFromSystem(rc), 0);
 
@@ -144,12 +143,14 @@ TEST(MainCliTest, RunsFullChainWithSlotSelectionAndArchiveInstall) {
 
     std::ifstream osr_is(archive_output / "etc" / "os-release");
     ASSERT_TRUE(osr_is.good());
-    const std::string osr((std::istreambuf_iterator<char>(osr_is)), std::istreambuf_iterator<char>());
+    const std::string osr((std::istreambuf_iterator<char>(osr_is)),
+                          std::istreambuf_iterator<char>());
     EXPECT_EQ(osr, "NAME=TestOS\n");
 
     std::ifstream app_is(archive_output / "bin" / "app");
     ASSERT_TRUE(app_is.good());
-    const std::string app((std::istreambuf_iterator<char>(app_is)), std::istreambuf_iterator<char>());
+    const std::string app((std::istreambuf_iterator<char>(app_is)),
+                          std::istreambuf_iterator<char>());
     EXPECT_EQ(app, "echo ok\n");
 }
 

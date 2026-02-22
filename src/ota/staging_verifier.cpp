@@ -3,9 +3,9 @@
 #include "crypto/sha256.hpp"
 #include "io/file_reader.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <cerrno>
-#include <algorithm>
 #include <fcntl.h>
 #include <string>
 #include <unistd.h>

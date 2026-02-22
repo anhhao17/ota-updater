@@ -85,7 +85,8 @@ TEST(ManifestTest, PlanningLogicWithForce) {
 }
 
 TEST(ManifestTest, FullParseTest) {
-    std::string raw = R"({"version":"1.0","components":[{"name":"boot","version":"1.1","sha256":"abcd"}]})";
+    std::string raw =
+        R"({"version":"1.0","components":[{"name":"boot","version":"1.1","sha256":"abcd"}]})";
     auto m = ManifestHandler::Parse(raw);
     ASSERT_TRUE(m.has_value());
     EXPECT_EQ(m->components[0].version, "1.1");

@@ -2,9 +2,9 @@
 
 #include "io/io.hpp"
 
+#include <algorithm>
 #include <archive.h>
 #include <archive_entry.h>
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstdlib>
