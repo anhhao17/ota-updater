@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
 
 namespace flash {
 
@@ -30,6 +31,10 @@ const Component* ComponentIndex::Find(std::string_view normalized_entry_name) co
 
 bool ComponentIndex::Contains(std::string_view normalized_entry_name) const {
     return Find(normalized_entry_name) != nullptr;
+}
+
+const std::unordered_map<std::string, const Component*>& ComponentIndex::EntriesByFilename() const {
+    return by_filename_;
 }
 
 Result ManifestLoader::LoadFromFirstBundleEntry(OtaTarBundleReader& bundle,
@@ -123,6 +128,8 @@ Result InstallCoordinator::InstallMatchingEntries(OtaTarBundleReader& bundle,
                                                   const ComponentIndex& component_index,
                                                   std::uint64_t overall_total) {
     std::uint64_t overall_done_base = 0;
+    std::unordered_set<std::string> installed_filenames;
+    installed_filenames.reserve(component_index.EntriesByFilename().size());
 
     bool eof = false;
     BundleEntryInfo entry{};
@@ -177,11 +184,19 @@ Result InstallCoordinator::InstallMatchingEntries(OtaTarBundleReader& bundle,
                 -1, "component '" + component->name + "' failed: " + update_result.message());
         }
 
+        installed_filenames.insert(component->filename);
         overall_done_base += comp_total;
 
         auto skip_result = bundle.SkipCurrent();
         if (!skip_result.is_ok())
             return skip_result;
+    }
+
+    for (const auto& [expected_name, _] : component_index.EntriesByFilename()) {
+        if (!installed_filenames.contains(expected_name)) {
+            return Result::Fail(-1,
+                                "manifest component entry missing from ota.tar: " + expected_name);
+        }
     }
 
     return Result::Ok();

@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <nlohmann/json.hpp>
+#include <string>
 
 namespace flash {
 
@@ -22,7 +23,8 @@ std::expected<std::vector<Component>, std::string> ParseComponentsArray(const js
     std::vector<Component> out;
     out.reserve(arr.size());
 
-    for (const auto& item : arr) {
+    for (size_t i = 0; i < arr.size(); ++i) {
+        const auto& item = arr[i];
         Component c;
         c.name = item.value("name", "");
         c.type = item.value("type", "");
@@ -35,6 +37,9 @@ std::expected<std::vector<Component>, std::string> ParseComponentsArray(const js
         c.path = item.value("path", "");
         c.permissions = item.value("permissions", "");
         c.create_destination = item.value("create-destination", false);
+        if (c.sha256.empty()) {
+            return std::unexpected("component[" + std::to_string(i) + "] missing sha256");
+        }
         out.push_back(c);
     }
 

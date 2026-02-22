@@ -20,6 +20,7 @@ class ComponentIndex {
 
     const Component* Find(std::string_view normalized_entry_name) const;
     bool Contains(std::string_view normalized_entry_name) const;
+    const std::unordered_map<std::string, const Component*>& EntriesByFilename() const;
 
   private:
     std::unordered_map<std::string, const Component*> by_filename_;

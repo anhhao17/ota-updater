@@ -15,6 +15,14 @@ Result ManifestSelector::SelectForDevice(const Manifest& input,
     if (input.slot_components.empty()) {
         return Result::Fail(-1, "manifest missing slot sections (slot-*)");
     }
+    if (input.hw_compatibility.empty()) {
+        return Result::Fail(-1, "manifest hw_compatibility is empty");
+    }
+    if (input.hw_compatibility != device.hw_compatibility) {
+        return Result::Fail(-1,
+                            "hw_compatibility mismatch: manifest='" + input.hw_compatibility +
+                                "' device='" + device.hw_compatibility + "'");
+    }
 
     auto it = input.slot_components.find(device.current_slot);
     if (it == input.slot_components.end()) {

@@ -50,6 +50,14 @@ TEST(ManifestTest, ParserEdgeCases) {
     })";
     auto res3 = ManifestHandler::Parse(type_mismatch);
     EXPECT_FALSE(res3.has_value());
+
+    std::string missing_sha = R"({
+        "version":"1.0.0",
+        "components":[{"name":"kernel","type":"raw","filename":"kernel.bin"}]
+    })";
+    auto res4 = ManifestHandler::Parse(missing_sha);
+    EXPECT_FALSE(res4.has_value());
+    EXPECT_NE(res4.error().find("missing sha256"), std::string::npos);
 }
 
 TEST(ManifestTest, PlanningLogicWithForce) {
@@ -64,7 +72,7 @@ TEST(ManifestTest, PlanningLogicWithForce) {
 }
 
 TEST(ManifestTest, FullParseTest) {
-    std::string raw = R"({"version":"1.0","components":[{"name":"boot","version":"1.1"}]})";
+    std::string raw = R"({"version":"1.0","components":[{"name":"boot","version":"1.1","sha256":"abcd"}]})";
     auto m = ManifestHandler::Parse(raw);
     ASSERT_TRUE(m.has_value());
     EXPECT_EQ(m->components[0].version, "1.1");

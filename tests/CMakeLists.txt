@@ -3,6 +3,7 @@ add_executable(flash_tool_tests
   test_partition_writer.cpp
   test_fd.cpp
   test_manifest.cpp
+  test_manifest_selector.cpp
   test_sha256.cpp
   test_gzip_reader.cpp
   test_path_utils.cpp
@@ -10,6 +11,7 @@ add_executable(flash_tool_tests
   test_staging_verifier.cpp
   test_mount_session.cpp
   test_ota_bundle_reader.cpp
+  test_ota_install_services.cpp
   test_archive_path_policy.cpp
   test_tar_stream_extractor.cpp
 )
