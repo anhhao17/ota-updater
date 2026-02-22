@@ -5,16 +5,23 @@
 using namespace flash;
 
 TEST(ManifestTest, VersionComparisonLogic) {
-    // Standard cases
-    EXPECT_EQ(ManifestHandler::CompareVersions("1.2.3", "1.2.2"), 1);
-    EXPECT_EQ(ManifestHandler::CompareVersions("1.0.0", "2.0.0"), -1);
-
-    EXPECT_EQ(ManifestHandler::CompareVersions("1.2", "1.2.0"), 0);
-    EXPECT_EQ(ManifestHandler::CompareVersions("1.2.1", "1.2"), 1);
-    EXPECT_EQ(ManifestHandler::CompareVersions("2", "1.9.9"), 1);
-
-    EXPECT_EQ(ManifestHandler::CompareVersions("1.2.a", "1.2.0"), 0);
-    EXPECT_EQ(ManifestHandler::CompareVersions("", ""), 0);
+    struct CompareCase {
+        const char* lhs;
+        const char* rhs;
+        int expected;
+    };
+    const CompareCase cases[] = {
+        {"1.2.3", "1.2.2", 1},
+        {"1.0.0", "2.0.0", -1},
+        {"1.2", "1.2.0", 0},
+        {"1.2.1", "1.2", 1},
+        {"2", "1.9.9", 1},
+        {"1.2.a", "1.2.0", 0},
+        {"", "", 0},
+    };
+    for (const auto& c : cases) {
+        EXPECT_EQ(ManifestHandler::CompareVersions(c.lhs, c.rhs), c.expected);
+    }
 }
 
 TEST(ManifestTest, ShouldUpdateLogic) {
@@ -36,28 +43,34 @@ TEST(ManifestTest, ShouldUpdateLogic) {
 }
 
 TEST(ManifestTest, ParserEdgeCases) {
-    std::string bad_json = R"({"something": "invalid"})";
-    auto res1 = ManifestHandler::Parse(bad_json);
-    EXPECT_TRUE(res1->components.empty());
+    {
+        std::string bad_json = R"({"something": "invalid"})";
+        auto res = ManifestHandler::Parse(bad_json);
+        EXPECT_TRUE(res->components.empty());
+    }
 
-    std::string garbage = "not json at all";
-    auto res2 = ManifestHandler::Parse(garbage);
-    EXPECT_FALSE(res2.has_value());
-
-    std::string type_mismatch = R"({
+    struct ParseFailCase {
+        std::string json;
+        std::string expected_error_substr;
+    };
+    const std::vector<ParseFailCase> fail_cases = {
+        {"not json at all", "Syntax Error"},
+        {R"({
         "version": 1.0, 
         "components": [{"name": "test", "version": 2}]
-    })";
-    auto res3 = ManifestHandler::Parse(type_mismatch);
-    EXPECT_FALSE(res3.has_value());
-
-    std::string missing_sha = R"({
+    })",
+         "type must be string"},
+        {R"({
         "version":"1.0.0",
         "components":[{"name":"kernel","type":"raw","filename":"kernel.bin"}]
-    })";
-    auto res4 = ManifestHandler::Parse(missing_sha);
-    EXPECT_FALSE(res4.has_value());
-    EXPECT_NE(res4.error().find("missing sha256"), std::string::npos);
+    })",
+         "missing sha256"},
+    };
+    for (const auto& c : fail_cases) {
+        auto res = ManifestHandler::Parse(c.json);
+        EXPECT_FALSE(res.has_value());
+        EXPECT_NE(res.error().find(c.expected_error_substr), std::string::npos);
+    }
 }
 
 TEST(ManifestTest, PlanningLogicWithForce) {

@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -103,52 +104,53 @@ TEST_F(UpdateModuleTest, ExecuteAtomicFile_CreateDestination_Succeeds) {
     EXPECT_TRUE(fs::exists(comp.path));
 }
 
-TEST_F(UpdateModuleTest, ExecuteAtomicFile_InvalidPermissions_Fails) {
-    Component comp;
-    comp.name = "cfg";
-    comp.type = "file";
-    comp.path = GetTestPath("config.txt");
-    comp.permissions = "invalid";
+TEST_F(UpdateModuleTest, ExecuteValidationFailures) {
+    struct FailureCase {
+        Component comp;
+        std::string payload;
+        std::string expected_error_substr;
+        bool null_source = false;
+    };
 
-    auto reader = std::make_unique<testutil::MemoryReader>("content");
-    Result res = UpdateModule::Execute(comp, std::move(reader));
-    ASSERT_FALSE(res.is_ok());
-    EXPECT_NE(res.msg.find("Invalid permissions value"), std::string::npos);
-}
+    std::vector<FailureCase> cases;
+    {
+        Component comp;
+        comp.name = "cfg";
+        comp.type = "file";
+        comp.path = GetTestPath("config-invalid-perm.txt");
+        comp.permissions = "invalid";
+        cases.push_back({std::move(comp), "content", "Invalid permissions value", false});
+    }
+    {
+        Component comp;
+        comp.name = "x";
+        comp.type = "unknown";
+        cases.push_back({std::move(comp), "content", "Unsupported component type", false});
+    }
+    {
+        Component comp;
+        comp.name = "kernel";
+        comp.type = "raw";
+        cases.push_back({std::move(comp), "payload", "install_to empty", false});
+    }
+    {
+        Component comp;
+        comp.name = "cfg";
+        comp.type = "file";
+        comp.path = GetTestPath("config-null-reader.txt");
+        cases.push_back({std::move(comp), "", "Null source reader", true});
+    }
 
-TEST_F(UpdateModuleTest, ExecuteUnsupportedType_Fails) {
-    Component comp;
-    comp.name = "x";
-    comp.type = "unknown";
+    for (const auto& c : cases) {
+        std::unique_ptr<IReader> reader;
+        if (!c.null_source) {
+            reader = std::make_unique<testutil::MemoryReader>(c.payload);
+        }
 
-    auto reader = std::make_unique<testutil::MemoryReader>("content");
-    Result res = UpdateModule::Execute(comp, std::move(reader));
-    ASSERT_FALSE(res.is_ok());
-    EXPECT_NE(res.msg.find("Unsupported component type"), std::string::npos);
-}
-
-TEST_F(UpdateModuleTest, ExecuteRawWithoutTarget_Fails) {
-    Component comp;
-    comp.name = "kernel";
-    comp.type = "raw";
-    comp.install_to.clear();
-
-    auto reader = std::make_unique<testutil::MemoryReader>("payload");
-    Result res = UpdateModule::Execute(comp, std::move(reader));
-    ASSERT_FALSE(res.is_ok());
-    EXPECT_NE(res.msg.find("install_to empty"), std::string::npos);
-}
-
-TEST_F(UpdateModuleTest, ExecuteNullSourceReader_Fails) {
-    Component comp;
-    comp.name = "cfg";
-    comp.type = "file";
-    comp.path = GetTestPath("config.txt");
-
-    std::unique_ptr<IReader> null_reader;
-    Result res = UpdateModule::Execute(comp, std::move(null_reader));
-    ASSERT_FALSE(res.is_ok());
-    EXPECT_NE(res.msg.find("Null source reader"), std::string::npos);
+        Result res = UpdateModule::Execute(c.comp, std::move(reader));
+        ASSERT_FALSE(res.is_ok());
+        EXPECT_NE(res.msg.find(c.expected_error_substr), std::string::npos);
+    }
 }
 
 } // namespace flash

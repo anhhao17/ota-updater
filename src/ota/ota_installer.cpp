@@ -6,8 +6,18 @@
 #include "util/logger.hpp"
 #include "util/manifest_selector.hpp"
 
+#include <cstdlib>
+
 namespace {
 constexpr const char kConfFile[] = "/run/ota-updater/ota.conf";
+
+const char* ResolveConfigPath() {
+    const char* override_path = std::getenv("OTA_CONFIG_PATH");
+    if (override_path && *override_path) {
+        return override_path;
+    }
+    return kConfFile;
+}
 } // namespace
 
 namespace flash {
@@ -33,7 +43,7 @@ Result OtaInstaller::Run(const std::string& input_path) {
         return manifest_result;
 
     DeviceConfig device_cfg;
-    auto cfg_res = DeviceConfig::LoadFromFile(kConfFile, device_cfg);
+    auto cfg_res = DeviceConfig::LoadFromFile(ResolveConfigPath(), device_cfg);
     if (!cfg_res.is_ok())
         return cfg_res;
 

@@ -8,24 +8,9 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
-#include <vector>
 
 namespace flash {
 namespace {
-
-std::string ReadAll(IReader& reader) {
-    std::string out;
-    std::vector<std::uint8_t> buf(1024);
-    while (true) {
-        const ssize_t n = reader.Read(std::span<std::uint8_t>(buf.data(), buf.size()));
-        if (n == 0)
-            break;
-        if (n < 0)
-            return {};
-        out.append(reinterpret_cast<const char*>(buf.data()), static_cast<size_t>(n));
-    }
-    return out;
-}
 
 TEST(StagingVerifierTest, StageAndVerifyAcceptsCorrectHash) {
     const std::string payload = "kernel-image-content";
@@ -39,7 +24,7 @@ TEST(StagingVerifierTest, StageAndVerifyAcceptsCorrectHash) {
     const auto res = stager.StageAndVerify(source, expected, staged);
     ASSERT_TRUE(res.is_ok()) << res.msg;
     ASSERT_NE(staged.reader, nullptr);
-    EXPECT_EQ(ReadAll(*staged.reader), payload);
+    EXPECT_EQ(testutil::ReadAll(*staged.reader), payload);
 }
 
 TEST(StagingVerifierTest, StageAndVerifyRejectsTamperedContent) {
@@ -70,7 +55,7 @@ TEST(StagingVerifierTest, StageAndVerifyAcceptsUppercaseExpectedHash) {
     const auto res = stager.StageAndVerify(source, expected, staged);
     ASSERT_TRUE(res.is_ok()) << res.msg;
     ASSERT_NE(staged.reader, nullptr);
-    EXPECT_EQ(ReadAll(*staged.reader), payload);
+    EXPECT_EQ(testutil::ReadAll(*staged.reader), payload);
 }
 
 TEST(StagingVerifierTest, StageAndVerifyRejectsEmptyExpectedHash) {

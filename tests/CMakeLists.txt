@@ -4,6 +4,7 @@ add_executable(flash_tool_tests
   test_fd.cpp
   test_manifest.cpp
   test_manifest_selector.cpp
+  test_ota_fullchain.cpp
   test_sha256.cpp
   test_gzip_reader.cpp
   test_path_utils.cpp
@@ -25,6 +26,10 @@ target_link_libraries(flash_tool_tests PRIVATE
 target_include_directories(flash_tool_tests PRIVATE
   ${CMAKE_SOURCE_DIR}/include
   ${CMAKE_CURRENT_LIST_DIR}
+)
+
+target_compile_definitions(flash_tool_tests PRIVATE
+  FLASH_TOOL_BIN="$<TARGET_FILE:flash_tool>"
 )
 
 include(GoogleTest)
